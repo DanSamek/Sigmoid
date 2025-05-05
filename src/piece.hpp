@@ -15,7 +15,7 @@ namespace Sigmoid{
         ROOK,
         QUEEN,
         KING,
-        NONE
+        NONE = 0xF
     };
 
     static inline const std::map<Piece, char> PIECE_MAP_CHAR = {{NONE, ' '}, {PAWN, 'p'}, {KNIGHT, 'n'}, {BISHOP, 'b'}, {ROOK, 'r'}, {QUEEN, 'q'}, {KING, 'k'}};

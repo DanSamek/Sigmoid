@@ -29,7 +29,7 @@ namespace Sigmoid{
 
         void reset(){
             for(PairBitboard& bb : bitboards)
-                bb.reset();
+                bb.clear();
 
             zobristKey = castling = halfMove =fullMove = 0;
             enPassantSquare = EN_PASSANT_SQUARE;

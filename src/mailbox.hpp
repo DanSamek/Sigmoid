@@ -10,6 +10,7 @@
 namespace Sigmoid {
     struct MailBox {
         std::array<uint32_t, 8> data;
+
         MailBox(){
             clear();
         }
@@ -27,13 +28,15 @@ namespace Sigmoid {
             int col = square % 8;
 
             int shifted_col = correct_shift(col);
-            assert((data[row] >> shifted_col) == 0);
-            data[row] |= piece << shifted_col;
+            assert(((data[row] >> shifted_col) & Piece::NONE) == Piece::NONE);
+
+            data[row] ^= (~(piece) & 0xF) << shifted_col;
         }
 
         void clear(){
-            for (uint32_t& item : data)
-                item = 0ULL;
+            for (uint32_t& item : data){
+                item = 0xFFFFFFFF;
+            }
         }
 
     private:

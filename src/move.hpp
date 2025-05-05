@@ -40,11 +40,11 @@ namespace Sigmoid{
             return result;
         }
 
-        void set_data(int from, int to, SpecialType type){
+        void set_data(int from, int to, SpecialType type = NONE){
             data = 0;
             data |= from;
-            data |= to << 2;
-            data |= type << 4;
+            data |= to << 6;
+            data |= type << 12;
         }
 
         static Move none(){

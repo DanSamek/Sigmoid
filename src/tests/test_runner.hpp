@@ -1,0 +1,35 @@
+#ifndef SIGMOID_TEST_RUNNER_HPP
+#define SIGMOID_TEST_RUNNER_HPP
+
+#include <vector>
+#include <iostream>
+#include <memory>
+
+#include "test.hpp"
+#include "move_tests.hpp"
+#include "color_tests.hpp"
+#include "mailbox_tests.hpp"
+#include "pairbitboard_tests.hpp"
+
+// No lib used for tests.
+// Most of the tests are just sanity checks.
+struct TestRunner{
+    static void run_all(){
+        srand(17);
+
+        std::vector<std::unique_ptr<Test>> tests;
+        tests.push_back(std::make_unique<MoveTests>());
+        tests.push_back(std::make_unique<ColorTests>());
+        tests.push_back(std::make_unique<MailboxTests>());
+        tests.push_back(std::make_unique<PairBitboardTests>());
+
+        for (std::unique_ptr<Test>& test: tests){
+            std::cout << "Running test " << test->test_name() << "." << std::endl;
+            test->run();
+            std::cout << "Test " << test->test_name() << " passed." << std::endl;
+            std::cout << std::endl;
+        }
+    }
+};
+
+#endif //SIGMOID_TEST_RUNNER_HPP

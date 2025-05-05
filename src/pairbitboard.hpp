@@ -1,6 +1,7 @@
 #ifndef SIGMOID_PAIRBITBOARD_HPP
 #define SIGMOID_PAIRBITBOARD_HPP
 
+#include <cassert>
 #include <cstdint>
 #include <iostream>
 
@@ -12,22 +13,35 @@ namespace Sigmoid{
     struct PairBitboard{
         uint64_t bitboards[2];
 
+        PairBitboard(){
+            clear();
+        }
+
         template<Color color>
-        uint64_t get() {
+        uint64_t get(){
             return bitboards[color];
         }
 
         template<Color color>
+        bool get(int square) {
+            assert(square >= 0 && square <= 63);
+            bool result = get_nth_bit(bitboards[color], square);
+            return result;
+        }
+
+        template<Color color>
         void set_bit(int square){
+            assert(square >= 0 && square <= 63);
             set_nth_bit(bitboards[color], square);
         }
 
         template<Color color>
         void pop_bit(int square){
+            assert(square >= 0 && square <= 63);
             pop_nth_bit(bitboards[color], square);
         }
         
-        void reset(){
+        void clear(){
             bitboards[0] = bitboards[1] = 0ULL;
         }
     };

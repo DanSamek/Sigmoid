@@ -25,12 +25,12 @@ namespace Sigmoid{
             return diff.data == data;
         }
 
-        static constexpr static Color white(){
-            return Color(true);
+        constexpr static Color white(){
+            return Color(WHITE);
         }
 
-        static constexpr static Color black(){
-            return Color(false);
+        constexpr static Color black(){
+            return Color(BLACK);
         }
     };
 }
