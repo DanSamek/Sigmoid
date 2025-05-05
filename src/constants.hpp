@@ -9,7 +9,7 @@ namespace Sigmoid {
     constexpr int STACK_SIZE = 256;
     constexpr int STACK_SIZE_P1 = STACK_SIZE + 1;
 
-    constexpr int EN_PASSANT_SQUARE = -1;
+    constexpr int NO_EN_PASSANT_SQUARE = -1;
 
 }
 #endif //SIGMOID_CONSTANTS_HPP

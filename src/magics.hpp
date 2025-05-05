@@ -16,6 +16,30 @@ namespace Sigmoid {
     // https://github.com/DanSamek/Sentinel/blob/main/src/magics.h
     // https://github.com/DanSamek/Sentinel/blob/main/src/magics.cpp
     struct Magics {
+        inline static uint64_t get_rook_moves(const uint64_t &blockers, int square) {
+            uint64_t hashBlockers = blockers & ROOK_BLOCKERS[square];
+            uint64_t hash = hashBlockers * ROOK_MAGICS[square];
+            uint64_t index = (hash >> (64ULL - ROOK_MAGICS_SHIFT[square]));
+            return ROOK_TABLE[square][index];
+        }
+
+        inline static uint64_t get_bishop_moves(const uint64_t &blockers, int square) {
+            uint64_t hashBlockers = blockers & BISHOP_BLOCKERS[square];
+            uint64_t hash = hashBlockers * BISHOP_MAGICS[square];
+            uint64_t index = (hash >> (64ULL - BISHOP_MAGICS_SHIFT[square]));
+            return BISHOP_TABLE[square][index];
+        }
+
+        static void init() {
+            if (ready) return;
+
+            generate_bishop_blockers();
+            generate_rook_blockers();
+            init_magics();
+            ready = true;
+        }
+
+    private:
         static inline bool ready = false;
 
         // Blocked masks for each square.
@@ -99,20 +123,6 @@ namespace Sigmoid {
         };
 
 
-        inline static uint64_t get_rook_moves(const uint64_t &blockers, int square) {
-            uint64_t hashBlockers = blockers & ROOK_BLOCKERS[square];
-            uint64_t hash = hashBlockers * ROOK_MAGICS[square];
-            uint64_t index = (hash >> (64ULL - ROOK_MAGICS_SHIFT[square]));
-            return ROOK_TABLE[square][index];
-        }
-
-        inline static uint64_t get_bishop_moves(const uint64_t &blockers, int square) {
-            uint64_t hashBlockers = blockers & BISHOP_BLOCKERS[square];
-            uint64_t hash = hashBlockers * BISHOP_MAGICS[square];
-            uint64_t index = (hash >> (64ULL - BISHOP_MAGICS_SHIFT[square]));
-            return BISHOP_TABLE[square][index];
-        }
-
         static void init_magics() {
             for (int rank = 0; rank < 8; rank++) {
                 for (int file = 0; file < 8; file++) {
@@ -176,15 +186,6 @@ namespace Sigmoid {
                     result.pop_back();
             }
             return result;
-        }
-
-        static void init() {
-            if (ready) return;
-
-            generate_bishop_blockers();
-            generate_rook_blockers();
-            init_magics();
-            ready = true;
         }
 
         static std::vector<uint64_t> get_magics(int file,

@@ -3,10 +3,10 @@
 
 #include <array>
 #include <cstdint>
+#include <map>
 
 #include "piece.hpp"
 #include "mailbox.hpp"
-
 #include "constants.hpp"
 #include "pairbitboard.hpp"
 
@@ -19,21 +19,32 @@ namespace Sigmoid{
         uint64_t zobristKey = 0ULL;
         uint64_t halfMove = 0, fullMove = 0;
 
-        /*
-         1 =     r  k [black]
-         1 << 2  r  k [black]
-         1 << 3  R  K [white]
-         1 << 4  K  R [white]
-         */
         uint8_t castling = 0;
 
         void reset(){
             for(PairBitboard& bb : bitboards)
                 bb.clear();
 
-            zobristKey = castling = halfMove =fullMove = 0;
-            enPassantSquare = EN_PASSANT_SQUARE;
+            zobristKey = castling = halfMove = fullMove = 0;
+            enPassantSquare = NO_EN_PASSANT_SQUARE;
             mailBox.clear();
+        }
+
+        template<Color color>
+        void set_bit(int square, Piece piece){
+            bitboards[piece].set_bit<color>(square);
+        }
+
+        template<Color color>
+        bool get_bit(int square, Piece piece){
+            return bitboards[piece].get<color>(square);
+        }
+
+        // K [1 << 0], Q [1 << 1], k [1 << 2], q [1 << 3]
+        static inline const std::map<char, int> castlingIndexes = {{'K', 0}, {'Q', 1}, {'k', 2}, {'q', 3}};
+
+        void set_casting_index(char c){
+            set_nth_bit(castling, castlingIndexes.at(c));
         }
     };
 }

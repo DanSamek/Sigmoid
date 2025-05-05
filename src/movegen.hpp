@@ -5,12 +5,15 @@
 
 #include "move.hpp"
 #include "constants.hpp"
+#include "board.hpp"
+#include "magics.hpp"
 
 namespace Sigmoid{
+    // Pseudo-legal movegen.
     struct Movegen{
 
         template<bool captures>
-        void generate_moves(std::array<Move, MAX_POSSIBLE_MOVES>& moves){
+        void generate_moves(const Board& board, std::array<Move, MAX_POSSIBLE_MOVES>& result_moves){
             // TODO
         }
     };

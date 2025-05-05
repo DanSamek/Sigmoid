@@ -10,6 +10,7 @@
 #include "color_tests.hpp"
 #include "mailbox_tests.hpp"
 #include "pairbitboard_tests.hpp"
+#include "board_tests.hpp"
 
 // No lib used for tests.
 // Most of the tests are just sanity checks.
@@ -22,6 +23,7 @@ struct TestRunner{
         tests.push_back(std::make_unique<ColorTests>());
         tests.push_back(std::make_unique<MailboxTests>());
         tests.push_back(std::make_unique<PairBitboardTests>());
+        tests.push_back(std::make_unique<BoardTests>());
 
         for (std::unique_ptr<Test>& test: tests){
             std::cout << "Running test " << test->test_name() << "." << std::endl;
