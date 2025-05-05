@@ -1,0 +1,8 @@
+struct TestStruct{
+    int itemWithData;
+    void test_function(){
+        int next_item = ..;
+    }
+
+    // no `auto` stuff, if its possible -- for example instead of std::vector<std::pair<int, int>> is better auto.
+}
