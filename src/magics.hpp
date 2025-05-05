@@ -161,17 +161,19 @@ namespace Sigmoid {
             std::vector<std::pair<int, int>> result;
 
             for (const auto& direction: directions) {
-                int rankTmp = rank + direction.second;
-                int fileTmp = file + direction.first;
+                int rank_tmp = rank + direction.second;
+                int file_tmp = file + direction.first;
 
                 bool added = false;
-                while (rankTmp >= 0 && rankTmp <= 7 && fileTmp >= 0 && fileTmp <= 7) {
-                    result.emplace_back(rankTmp, fileTmp);
-                    rankTmp += direction.second;
-                    fileTmp += direction.first;
+                while (rank_tmp >= 0 && rank_tmp <= 7 && file_tmp >= 0 && file_tmp <= 7) {
+                    result.emplace_back(rank_tmp, file_tmp);
+                    rank_tmp += direction.second;
+                    file_tmp += direction.first;
                     added = true;
                 }
-                if (added) result.pop_back();
+
+                if (added)
+                    result.pop_back();
             }
             return result;
         }
@@ -213,8 +215,10 @@ namespace Sigmoid {
                 uint64_t index = magic_index(blocker, blockerBitBoard, indexBits, magic);
                 uint64_t item = table[index];
 
-                if (item == 0ULL) table[index] = moves;
-                else if (moves != item) return {};
+                if (item == 0ULL)
+                    table[index] = moves;
+                else if (moves != item)
+                    return {};
             }
             return table;
         }
@@ -226,14 +230,15 @@ namespace Sigmoid {
 
             int move = 0;
             while (move <= 63) {
-                if ((bitboard >> move) & 1) bits.push_back(move);
+                if ((bitboard >> move) & 1)
+                    bits.push_back(move);
                 move++;
             }
 
             std::size_t n = bits.size();
-            int numCombinations = std::pow(2, n);
+            int number_of_combinations = std::pow(2, n);
 
-            for (int i = 0; i < numCombinations; ++i) {
+            for (int i = 0; i < number_of_combinations; ++i) {
                 uint64_t b = 0ULL;
                 for (std::size_t j = 0; j < n; ++j) {
                     if (i & (1 << j)) {
@@ -259,25 +264,28 @@ namespace Sigmoid {
                                        const uint64_t& bitboard,
                                        const std::vector<std::pair<int, int>>& movement){
 
-            auto board2d = generate_board_from_bitboard(bitboard);
+            auto board = generate_board_from_bitboard(bitboard);
             std::vector<int> bits;
 
             for(const auto& direction : movement) {
-                int rankTmp = rank + direction.second;
-                int fileTmp = file + direction.first;
-                while(rankTmp >= 0 && rankTmp <= 7 && fileTmp >= 0 && fileTmp <= 7){
-                    int square = rankTmp * 8 + fileTmp;
+                int rank_tmp = rank + direction.second;
+                int file_tmp = file + direction.first;
+
+                while(rank_tmp >= 0 && rank_tmp <= 7 && file_tmp >= 0 && file_tmp <= 7){
+                    int square = rank_tmp * 8 + file_tmp;
                     bits.push_back(square);
-                    if(board2d[rankTmp][fileTmp]) break;
-                    rankTmp += direction.second;
-                    fileTmp += direction.first;
+                    if(board[rank_tmp][file_tmp])
+                        break;
+
+                    rank_tmp += direction.second;
+                    file_tmp += direction.first;
                 }
             }
 
-            uint64_t resultB = 0ULL;
-            for(auto item: bits) set_nth_bit(resultB, item);
+            uint64_t result = 0ULL;
+            for(auto item: bits) set_nth_bit(result, item);
 
-            return resultB;
+            return result;
         }
 
         static std::array<std::array<bool, 8>, 8> generate_board_from_bitboard(const uint64_t& bb) {
