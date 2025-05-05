@@ -11,8 +11,7 @@ namespace Sigmoid {
     struct MailBox {
         std::array<uint32_t, 8> data;
         MailBox(){
-            for (uint32_t& row: data)
-                row = 0;
+            clear();
         }
 
         Piece at(int square){
@@ -30,6 +29,11 @@ namespace Sigmoid {
             int shifted_col = correct_shift(col);
             assert((data[row] >> shifted_col) == 0);
             data[row] |= piece << shifted_col;
+        }
+
+        void clear(){
+            for (uint32_t& item : data)
+                item = 0ULL;
         }
 
     private:

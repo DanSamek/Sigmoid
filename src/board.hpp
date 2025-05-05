@@ -10,6 +10,7 @@
 #include "state.hpp"
 #include "constants.hpp"
 #include "color.hpp"
+#include <iostream>
 
 namespace Sigmoid {
     /* Board representation.
@@ -24,7 +25,7 @@ namespace Sigmoid {
       7
     */
     struct Board{
-        std::array<State, MAX_PLY_P1> stateStack;
+        std::array<State, STACK_SIZE_P1> stateStack;
         int ply = 0;
         Color whoPlay;
         State currentState;
@@ -33,6 +34,7 @@ namespace Sigmoid {
             // TODO nnue.push().
 
             // TODO make move
+            // TODO update mailbox.
             // TODO update zobrist hash
             // TODO NNUE updates.
 
@@ -46,24 +48,42 @@ namespace Sigmoid {
             currentState = stateStack[ply];
             whoPlay = whoPlay.flip();
 
-            // NNUE pop TODO
-
+            // TODO NNUE nnue.pop()
             assert(ply >= 1);
             ply--;
         }
 
         // TODO
         void load_from_fen(std::string fen){
+            currentState.reset();
 
+            int row = 0;
+            for (char c: fen){
+                if (c == '/')
+                    row ++;
+
+                if (c == ' ')
+                    break;
+            }
         }
 
         // TODO
         std::string get_fen(){
 
         }
+
+        void print_board() {
+            for (int i = 0; i < 64; i++){
+                Piece piece = currentState.mailBox.at(i);
+                currentState.bitboards[PAWN].get<Color::white()>();
+                char c = piece_char<Color::white()>(piece);
+
+                std::cout << c << std::endl;
+            }
+        }
+
     };
 
 }
-
 
 #endif //SIGMOID_BOARD_HPP

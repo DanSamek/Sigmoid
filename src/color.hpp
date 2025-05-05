@@ -1,20 +1,36 @@
 #ifndef SIGMOID_COLOR_HPP
 #define SIGMOID_COLOR_HPP
 
+#include "constants.hpp"
+
 namespace Sigmoid{
     struct Color{
-        bool white = true;
+        static inline constexpr int WHITE = 0;
+        static inline constexpr int BLACK = 1;
+        int data = WHITE;
+
+        operator int() const{
+            return data;
+        }
 
         Color flip(){
             Color c
             {
-                white = !white
+                data = data == WHITE ? BLACK : WHITE
             };
             return c;
         }
 
         bool operator == (Color diff){
-            return diff.white == white;
+            return diff.data == data;
+        }
+
+        static constexpr static Color white(){
+            return Color(true);
+        }
+
+        static constexpr static Color black(){
+            return Color(false);
         }
     };
 }
