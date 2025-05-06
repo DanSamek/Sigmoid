@@ -45,6 +45,13 @@ namespace Sigmoid {
     }
 
 
+    static inline void print_bitboard(const uint64_t& bb){
+        for (int i = 0; i < 64; i++){
+            std::cout << (int)get_nth_bit(bb, i);
+            if (i != 0 && (i + 1) % 8 == 0)
+                std::cout << std::endl;
+        }
+    }
 }
 
 
