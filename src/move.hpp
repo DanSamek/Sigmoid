@@ -23,6 +23,10 @@ namespace Sigmoid{
             PROMO_QUEEN = 6
         };
 
+        Move(int from, int to, SpecialType type = NONE){
+            set_data(from, to, type);
+        }
+
         uint16_t data = 0;
 
         uint8_t from(){
@@ -48,7 +52,7 @@ namespace Sigmoid{
         }
 
         static Move none(){
-            return Move();
+            return Move(0,0);
         }
 
     private:

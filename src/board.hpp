@@ -33,7 +33,9 @@ namespace Sigmoid {
         Color whoPlay;
         State currentState;
 
-        bool make_move() {
+        bool make_move(const Move& move) {
+            if (is_illegal(move)) return false;
+
             // TODO nnue.push().
 
             // TODO make move
@@ -114,6 +116,12 @@ namespace Sigmoid {
             std::string substr = fen.substr(i);
             std::stringstream ss(substr);
             ss >> currentState.halfMove >> currentState.fullMove;
+        }
+
+        // TODO -- simple check of a move, that is on 100% illegal and we can return from make_move false.
+        // For example pins -- can be detected with rays.
+        bool is_illegal(const Move& move){
+            return false;
         }
 
         // TODO -- will be used in datagen -- oneday.

@@ -41,11 +41,39 @@ namespace Sigmoid{
         }
 
         // K [1 << 0], Q [1 << 1], k [1 << 2], q [1 << 3]
+        enum Castling{
+            K = 1,
+            Q = 1 << 1,
+            k = 1 << 2,
+            q = 1 << 3
+        };
+
         static inline const std::map<char, int> castlingIndexes = {{'K', 0}, {'Q', 1}, {'k', 2}, {'q', 3}};
 
         void set_casting_index(char c){
             set_nth_bit(castling, castlingIndexes.at(c));
         }
+
+        template<Color us>
+        uint8_t get_k_castling(){
+            return us == Color::white() ? K : k;
+        }
+
+        template<Color us>
+        uint8_t get_q_castling(){
+            return us == Color::white() ? Q : q;
+        }
+
+        template<Color us, bool Q>
+        bool is_castling_set(){
+            if constexpr (Q){
+                return (get_q_castling<us>() & castling) != 0;
+            }
+            else{
+                return (get_k_castling<us>() & castling) != 0;
+            }
+        }
+
     };
 }
 

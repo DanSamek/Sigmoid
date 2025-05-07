@@ -15,8 +15,7 @@ struct MoveTests : public Test{
 
     void run() const override{
 
-        Move m;
-        m.set_data(10, 11);
+        Move m(10, 11);
         assert(m.from() == 10);
         assert(m.to() == 11);
         assert(m.special_type() == Move::NONE);

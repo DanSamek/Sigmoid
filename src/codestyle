@@ -1,6 +1,6 @@
 struct TestStruct{
     int itemWithData;
-    void test_function(){
+    void test_function(int someCoolArgument){
         int next_item = ..;
     }
 

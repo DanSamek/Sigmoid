@@ -7,13 +7,79 @@
 #include "constants.hpp"
 #include "board.hpp"
 #include "magics.hpp"
+#include "movelist.hpp"
 
 namespace Sigmoid{
     // Pseudo-legal movegen.
     struct Movegen{
-
         template<bool captures>
-        void generate_moves(const Board& board, std::array<Move, MAX_POSSIBLE_MOVES>& result_moves){
+        static void generate_moves(const Board& board, MoveList& moveList) {
+            if (board.whoPlay == Color::white()) generate_moves<captures, Color::white()>(board, moveList);
+            else generate_moves<captures, Color::black()>(board, moveList);
+        }
+
+        template<bool captures, Color us>
+        static void generate_moves(const Board& board, MoveList& moveList){
+            const State& board_state = board.currentState;
+            constexpr Color enemy = us == Color::white() ? Color::black() : Color::white();
+
+            uint64_t friendly_bits = 0ULL;
+            uint64_t enemy_bits = 0ULL;
+            uint64_t merged_bits = 0ULL;
+
+            for (const PairBitboard& pb : board_state.bitboards){
+                friendly_bits |= pb.get<us>();
+                enemy_bits    |= pb.get<enemy>();
+            }
+            merged_bits = friendly_bits | enemy_bits;
+
+            auto bitboard_to_moves = [&] (int fromSq, uint64_t bb){
+                int to_sq;
+                while (bb && (to_sq = bit_scan_forward_pop_lsb(bb)) && !get_nth_bit(friendly_bits, to_sq)){
+                    moveList.add(Move(fromSq, to_sq));
+                }
+            };
+
+            int pos;
+            uint64_t moves;
+            // Rook
+            uint64_t bb = board_state.bitboards[ROOK].get<us>();
+            while(bb && (pos = bit_scan_forward_pop_lsb(bb)) && (moves = Magics::get_rook_moves(merged_bits, pos))){
+                bitboard_to_moves(pos, moves);
+            }
+
+            // Bishop
+            bb = board_state.bitboards[BISHOP].get<us>();
+            while(bb && (pos = bit_scan_forward_pop_lsb(bb)) && (moves = Magics::get_bishop_moves(merged_bits, pos))){
+                bitboard_to_moves(pos, moves);
+            }
+
+            // Queen
+            bb = board_state.bitboards[QUEEN].get<us>();
+            while(bb && (pos = bit_scan_forward_pop_lsb(bb))){
+                moves = Magics::get_bishop_moves(merged_bits, pos) | Magics::get_rook_moves(merged_bits, pos);
+                bitboard_to_moves(pos, moves);
+            }
+
+            // Knight
+            bb = board_state.bitboards[KNIGHT].get<us>();
+            while(bb && (pos = bit_scan_forward_pop_lsb(bb)) && (moves = knightMoves[pos])){
+                bitboard_to_moves(pos, moves);
+            }
+
+            // King
+            pos = board_state.bitboards[KING].get<us>();
+            bitboard_to_moves(kingMoves[pos]);
+            const auto castlingMasks = CASTLING_FREE_MASKS[us];
+
+            if (board_state.is_castling_set<us, false>() && (castlingMasks[K_CASTLE] & merged_bits) == 0){
+                moveList.add(Move(pos, pos + 2, Move::CASTLE));
+            }
+            if (board_state.is_castling_set<us, true>() && (castlingMasks[Q_CASTLE] & merged_bits) == 0){
+                moveList.add(Move(pos, pos - 2, Move::CASTLE));
+            }
+
+            // Pawns
             // TODO
         }
 
@@ -25,7 +91,6 @@ namespace Sigmoid{
             generate_pawn_bitboards<Color::white()>();
             generate_pawn_bitboards<Color::black()>();
         }
-
 
         // Will be removed, when movegen will pass perft tests.
         template<Piece piece>
@@ -64,6 +129,10 @@ namespace Sigmoid{
         }
 
     private:
+        static inline const int Q_CASTLE = 0;
+        static inline const int K_CASTLE = 1;
+
+
         static inline std::array<uint64_t, 64> kingMoves, knightMoves;
         static inline std::array<std::array<uint64_t, 64>, 2> pawnQuietMoves, pawnAttackMoves;
 
