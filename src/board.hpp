@@ -34,8 +34,6 @@ namespace Sigmoid {
         State currentState;
 
         bool make_move(const Move& move) {
-            if (is_illegal(move)) return false;
-
             // TODO nnue.push().
 
             // TODO make move

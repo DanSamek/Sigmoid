@@ -13,16 +13,18 @@ namespace Sigmoid{
             return data;
         }
 
-        Color flip(){
-            Color c
-            {
-                data = data == WHITE ? BLACK : WHITE
-            };
+        Color flip() const{
+            Color c;
+            c.data = data == WHITE ? BLACK : WHITE;
             return c;
         }
 
         bool operator == (Color diff){
             return diff.data == data;
+        }
+
+        Color operator ~() const{
+            return this->flip();
         }
 
         constexpr inline static Color white(){

@@ -19,14 +19,15 @@ struct ColorTests : public Test{
         assert(color == Color::white());
 
         color = color.flip();
-        assert(color == Color::black());
+        assert(color == Color::black() == ~(~color));
 
-        color = color.flip();
+        color = ~color;
         assert(color == Color::white());
 
         color = Color::black();
         assert(color == Color::black());
         assert(color.flip() == Color::white());
+
     }
 };
 

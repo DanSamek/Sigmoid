@@ -33,10 +33,10 @@ namespace Sigmoid{
             }
             merged_bits = friendly_bits | enemy_bits;
 
-            auto bitboard_to_moves = [&] (int fromSq, uint64_t bb){
+            auto bitboard_to_moves = [&] (int fromSq, uint64_t bb, Move::SpecialType specialType = Move::NONE){
                 int to_sq;
                 while (bb && (to_sq = bit_scan_forward_pop_lsb(bb)) && !get_nth_bit(friendly_bits, to_sq)){
-                    moveList.add(Move(fromSq, to_sq));
+                    moveList.add(Move(fromSq, to_sq, specialType));
                 }
             };
 
@@ -80,7 +80,50 @@ namespace Sigmoid{
             }
 
             // Pawns
-            // TODO
+            // Split to pawns:
+            //  - simple move
+            //  - pre-promotion rank
+            //  - double move
+            constexpr uint64_t pawn_double_push_bb = us == Color::white() ? WHITE_PAWN_START_BB : BLACK_PAWN_START_BB;
+            constexpr uint64_t promo_ray_bb = us == Color::white() ? BLACK_PAWN_START_BB : WHITE_PAWN_START_BB;
+
+            uint64_t double_push_pawns = board_state.bitboards[PAWN].get<us>() & pawn_double_push_bb;
+            uint64_t promo_pawns       = board_state.bitboards[PAWN].get<us>() & promo_ray_bb;
+            uint64_t simple_push_pawns = board_state.bitboards[PAWN].get<us>() ^ (double_push_pawns | promo_pawns);
+
+            const uint64_t ep_bitmask = board_state.enPassantSquare != NO_SQUARE ? (1 << board_state.enPassantSquare) : 0ULL;
+
+            while (simple_push_pawns && (pos = bit_scan_forward_pop_lsb(simple_push_pawns))) {
+                bb = (pawnQuietMoves[us][pos] & (~merged_bits)) | (pawnAttackMoves[us][pos] & enemy_bits);
+                bitboard_to_moves(pos, bb);
+                // en-passant.
+                bb = pawnAttackMoves[us][pos] & ep_bitmask;
+                bitboard_to_moves(pos, bb, Move::EN_PASSANT);
+            }
+
+            while (promo_pawns && (pos = bit_scan_forward_pop_lsb(promo_pawns))) {
+                bb = (pawnQuietMoves[us][pos] & (~merged_bits)) | (pawnAttackMoves[us][pos] & enemy_bits);
+                int to_sq;
+                while (bb && (to_sq = bit_scan_forward_pop_lsb(bb))){
+                    moveList.add(Move(pos, to_sq, Move::PROMO_BISHOP));
+                    moveList.add(Move(pos, to_sq, Move::PROMO_KNIGHT));
+                    moveList.add(Move(pos, to_sq, Move::PROMO_QUEEN));
+                    moveList.add(Move(pos, to_sq, Move::PROMO_ROOK));
+                }
+            }
+
+            while (double_push_pawns && (pos = bit_scan_forward_pop_lsb(double_push_pawns))){
+                bb = (pawnAttackMoves[us][pos] & enemy_bits);
+
+                uint64_t q_moves = pawnQuietMoves[us][pos] & (~merged_bits);
+                const uint64_t opp_pawn_mask = pawnQuietMoves[~us][(us == Color::white() ? pos - 16 : pos + 16)];
+
+                if ((q_moves & opp_pawn_mask) == 0ULL){
+                    q_moves = 0ULL;
+                }
+                bb |= q_moves;
+                bitboard_to_moves(pos, bb);
+            }
         }
 
         void init(){
@@ -129,9 +172,11 @@ namespace Sigmoid{
         }
 
     private:
-        static inline const int Q_CASTLE = 0;
-        static inline const int K_CASTLE = 1;
+        static inline constexpr int Q_CASTLE = 0;
+        static inline constexpr int K_CASTLE = 1;
 
+        static inline constexpr uint64_t BLACK_PAWN_START_BB = 0xff00;
+        static inline constexpr uint64_t WHITE_PAWN_START_BB = 0xff000000000000;
 
         static inline std::array<uint64_t, 64> kingMoves, knightMoves;
         static inline std::array<std::array<uint64_t, 64>, 2> pawnQuietMoves, pawnAttackMoves;
