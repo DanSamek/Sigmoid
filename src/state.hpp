@@ -12,7 +12,7 @@
 namespace Sigmoid{
     struct State{
         std::array<PairBitboard, 6> bitboards;
-
+        std::array<Piece, 64> mailBox;
         uint8_t enPassantSquare = 0;
         uint64_t zobristKey = 0ULL;
         uint64_t halfMove = 0, fullMove = 0;
@@ -22,6 +22,9 @@ namespace Sigmoid{
         void reset(){
             for(PairBitboard& bb : bitboards)
                 bb.clear();
+
+            for (Piece& p : mailBox)
+                p = NONE;
 
             zobristKey = castling = halfMove = fullMove = 0;
             enPassantSquare = NO_EN_PASSANT_SQUARE;
@@ -59,6 +62,12 @@ namespace Sigmoid{
         template<Color us>
         uint8_t get_q_castling(){
             return us == Color::white() ? Q : q;
+        }
+
+        template<Color us>
+        void disable_castling(){
+            uint8_t disable = get_k_castling<us>() | get_q_castling<us>();
+            castling ^= disable;
         }
 
         template<Color us, bool Q>

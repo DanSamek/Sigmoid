@@ -18,7 +18,7 @@ namespace Sigmoid{
         }
 
         template<Color color>
-        uint64_t get(){
+        uint64_t get() const{
             return bitboards[color];
         }
 

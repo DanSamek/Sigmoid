@@ -11,6 +11,7 @@ struct BoardTests : public Test{
         return "BoardTests";
     }
 
+
     void run() const override{
         // Run and see [not ideal, but who cares at all].
         Board b;
