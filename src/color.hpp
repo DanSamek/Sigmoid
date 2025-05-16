@@ -5,8 +5,6 @@
 
 namespace Sigmoid{
     struct Color{
-        static inline constexpr int WHITE = 0;
-        static inline constexpr int BLACK = 1;
         int data = WHITE;
 
         operator int() const{
@@ -35,6 +33,11 @@ namespace Sigmoid{
             return Color(BLACK);
         }
     };
+
+    template<Color us>
+    inline constexpr Color opp(){
+        return us.data == WHITE ? Color::black() : Color::white();
+    }
 }
 
 #endif //SIGMOID_COLOR_HPP

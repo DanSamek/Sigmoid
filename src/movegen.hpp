@@ -21,7 +21,6 @@ namespace Sigmoid{
         template<bool captures, Color us>
         static void generate_moves(const Board& board, MoveList& moveList){
             const State& board_state = board.currentState;
-            constexpr Color enemy = us == Color::white() ? Color::black() : Color::white();
 
             uint64_t friendly_bits = 0ULL;
             uint64_t enemy_bits = 0ULL;
@@ -29,7 +28,7 @@ namespace Sigmoid{
 
             for (const PairBitboard& pb : board_state.bitboards){
                 friendly_bits |= pb.get<us>();
-                enemy_bits    |= pb.get<enemy>();
+                enemy_bits    |= pb.get<~us>();
             }
             merged_bits = friendly_bits | enemy_bits;
 

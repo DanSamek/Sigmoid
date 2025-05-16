@@ -28,6 +28,9 @@ struct ColorTests : public Test{
         assert(color == Color::black());
         assert(color.flip() == Color::white());
 
+        color = Color::white();
+        assert(~color == opp<Color::white()>());
+
     }
 };
 

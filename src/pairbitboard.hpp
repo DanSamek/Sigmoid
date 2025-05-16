@@ -11,7 +11,7 @@
 namespace Sigmoid{
     // Wrapper for white and black piece bitboard - piece type.
     struct PairBitboard{
-        uint64_t bitboards[2];
+        std::array<uint64_t, 2> bitboards;
 
         PairBitboard(){
             clear();

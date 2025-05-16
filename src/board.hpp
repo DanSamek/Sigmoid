@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <math.h>
 
 #include "piece.hpp"
 #include "state.hpp"
@@ -15,33 +16,74 @@
 #include "helper.hpp"
 
 namespace Sigmoid {
-    /* Board representation.
-        0 1 2 3 4 5 6 7
-      0
-      1
-      2
-      3
-      4
-      5
-      6
-      7
-    */
     struct Board{
 
         std::array<State, STACK_SIZE_P1> stateStack;
         int ply = 0;
         Color whoPlay;
         State currentState;
+        std::array<Piece, 64> mailBox;
 
+        Board(): ply(0) {
+            for(Piece& i : mailBox) i = NONE;
+        }
+
+        bool is_capture(const Move& move){
+            return mailBox[move.to()] != NONE;
+        }
+
+        Piece at(int square){
+            return mailBox[square];
+        }
+
+
+        bool make_move(const Move& move){
+            return whoPlay == Color::white() ? make_move<Color::white()>(move) : make_move<Color::black()>(move);
+        }
+
+        // TODO nnue.push().
+        // TODO update zobrist hash
+        // TODO NNUE updates.
+
+        template<Color us>
         bool make_move(const Move& move) {
-            // TODO nnue.push().
+            State new_state = currentState;
+            if (is_illegal(new_state, move)) return false;
 
-            // TODO make move
-            // TODO update mailbox.
-            // TODO update zobrist hash
-            // TODO NNUE updates.
+            const bool is_cap = is_capture(move);
+            const Piece piece = at(move.from());
+            const int from = move.from();
+            const int to = move.from();
+            const Piece promo_piece = move.promo_piece();
+            const Move::SpecialType specialType = move.special_type();
 
+            Piece to_piece = piece;
+
+            if (is_cap)
+            {
+                Piece captured = mailBox[to];
+                assert(captured != NONE);
+                new_state.bitboards[captured].pop_bit<opp<us>()>(to);
+            }
+            else if (promo_piece != NONE)
+                to_piece = promo_piece;
+
+            else if (specialType == Move::EN_PASSANT)
+                handle_ep<us>(new_state, from, to);
+            else if (specialType == Move::CASTLE)
+                handle_castling<us>(new_state, from, to);
+            else if (piece == Piece::PAWN && abs(from - to) > 8)
+                new_state.enPassantSquare = us == WHITE ? from - 8 : from + 8;
+
+            new_state.bitboards[piece].pop_bit<us>(from);
+            new_state.bitboards[to_piece].set_bit<us>(to);
+
+            mailBox[from] = NONE;
+            mailBox[to] = to_piece;
+
+            whoPlay = whoPlay.flip();
             stateStack[ply] = currentState;
+            currentState = new_state;
             ply++;
             return true;
         }
@@ -83,7 +125,7 @@ namespace Sigmoid {
                 else
                     currentState.set_bit<Color::black()>(square, piece);
 
-                currentState.mailBox.set_piece(square, piece);
+                mailBox[square] = piece;
                 square++;
             }
             ++i; // move to a color index in fen.
@@ -116,21 +158,23 @@ namespace Sigmoid {
             ss >> currentState.halfMove >> currentState.fullMove;
         }
 
-        // TODO -- simple check of a move, that is on 100% illegal and we can return from make_move false.
-        // For example pins -- can be detected with rays.
-        bool is_illegal(const Move& move){
-            return false;
+
+        template<Color us>
+        void handle_castling(State& state, int from, int to){
+
         }
 
-        // TODO -- will be used in datagen -- oneday.
-        std::string get_fen(){}
+        template<Color us>
+        void handle_ep(State& state, int from, int to){
+
+        }
 
         // Only for debug.
         void print_state() {
             for (int row = 0; row < 8; row++){
                 for (int col = 0; col < 8; col++){
                     int i = get_square(row, col);
-                    Piece piece = currentState.mailBox.at(i);
+                    Piece piece = mailBox[i];
 
                     if (i == currentState.enPassantSquare){
                         std::cout << "E";
@@ -152,6 +196,15 @@ namespace Sigmoid {
             std::cout << "Castling: " << (int)currentState.castling << std::endl;
             std::cout << std::endl;
         }
+
+        // TODO -- simple check of a move, that is on 100% illegal and we can return from make_move false.
+        // For example pins -- can be detected with rays.
+        bool is_illegal(const State& state, const Move& move){
+            return false;
+        }
+
+        // TODO -- will be used in datagen -- oneday.
+        std::string get_fen(){}
     };
 
 }

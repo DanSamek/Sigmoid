@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <cassert>
+#include "piece.hpp"
 
 namespace Sigmoid{
     // [en-passant|castle|promo[KNIGHT, BISHOP, ROOK, QUEEN], NONE]
@@ -29,19 +30,24 @@ namespace Sigmoid{
 
         uint16_t data = 0;
 
-        uint8_t from(){
+        uint8_t from() const{
             uint8_t result = data & SQ_MASK;
             return result;
         }
 
-        uint8_t to(){
+        uint8_t to() const{
             uint8_t result = (data >> 6) & SQ_MASK;
             return result;
         }
 
-        SpecialType special_type(){
+        SpecialType special_type() const{
             SpecialType result = (SpecialType)(data >> 12);
             return result;
+        }
+
+        Piece promo_piece() const{
+            SpecialType tmp =  special_type();
+            return tmp < 3 ? Piece::NONE : Piece(tmp - 2);
         }
 
         void set_data(int from, int to, SpecialType type = NONE){
@@ -51,7 +57,7 @@ namespace Sigmoid{
             data |= type << 12;
         }
 
-        static Move none(){
+        inline static Move none(){
             return Move(0,0);
         }
 

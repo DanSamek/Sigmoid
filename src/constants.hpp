@@ -12,5 +12,8 @@ namespace Sigmoid {
     constexpr int NO_EN_PASSANT_SQUARE = -1;
 
     constexpr uint8_t NO_SQUARE = -1;
+
+    static inline constexpr int WHITE = 0;
+    static inline constexpr int BLACK = 1;
 }
 #endif //SIGMOID_CONSTANTS_HPP

@@ -6,14 +6,12 @@
 #include <map>
 
 #include "piece.hpp"
-#include "mailbox.hpp"
 #include "constants.hpp"
 #include "pairbitboard.hpp"
 
 namespace Sigmoid{
     struct State{
         std::array<PairBitboard, 6> bitboards;
-        MailBox mailBox;
 
         uint8_t enPassantSquare = 0;
         uint64_t zobristKey = 0ULL;
@@ -27,7 +25,6 @@ namespace Sigmoid{
 
             zobristKey = castling = halfMove = fullMove = 0;
             enPassantSquare = NO_EN_PASSANT_SQUARE;
-            mailBox.clear();
         }
 
         template<Color color>
