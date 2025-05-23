@@ -95,8 +95,8 @@ namespace Sigmoid{
             //  - simple move
             //  - pre-promotion rank
             //  - double move
-            const int64_t pawn_double_push_bb =  PAWN_STARTS[us]; //   us == Color::white() ? WHITE_PAWN_START_BB : BLACK_PAWN_START_BB; + TODO fix template magic - make it constexpr
-            const uint64_t promo_ray_bb = PAWN_STARTS[opp<us>()]; //  us == Color::white() ? BLACK_PAWN_START_BB : WHITE_PAWN_START_BB;
+            const int64_t pawn_double_push_bb =  PAWN_STARTS[us];
+            const uint64_t promo_ray_bb = PAWN_STARTS[opp<us>()];
 
             uint64_t double_push_pawns = state.bitboards[PAWN].get<us>() & pawn_double_push_bb;
             uint64_t promo_pawns       = state.bitboards[PAWN].get<us>() & promo_ray_bb;

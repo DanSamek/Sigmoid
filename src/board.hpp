@@ -59,6 +59,7 @@ namespace Sigmoid {
                 Piece captured = new_state.mailBox[to];
                 assert(captured != NONE);
                 new_state.bitboards[captured].pop_bit<opp<us>()>(to);
+                disable_cap_castling<us>(new_state, move);
             }
             else if (promo_piece != NONE)
                 to_piece = promo_piece;
@@ -161,6 +162,29 @@ namespace Sigmoid {
             ss >> currentState.halfMove >> currentState.fullMove;
         }
 
+        template<Color us>
+        void disable_cap_castling(State& state, const Move& move){
+            if (!state.is_some_castling_set<opp<us>()>())
+                return;
+
+            uint64_t enemy_rook_bb_cpy = state.bitboards[ROOK].get<opp<us>()>();
+
+            int to = move.to();
+            if (us == BLACK){
+                if (to == 63 && get_nth_bit(enemy_rook_bb_cpy, to))
+                    state.disable_castling_index(State::K_CASTLING_BIT);
+
+                if (to == 56 && get_nth_bit(enemy_rook_bb_cpy, to))
+                    state.disable_castling_index(State::Q_CASTLING_BIT);
+            }
+            else{
+                if (to == 7 && get_nth_bit(enemy_rook_bb_cpy, to))
+                    state.disable_castling_index(State::k_CASTLING_BIT);
+
+                if (to == 3 && get_nth_bit(enemy_rook_bb_cpy, to))
+                    state.disable_castling_index(State::q_CASTLING_BIT);
+            }
+        }
 
         template<Color us>
         void disable_castling(State& state, const Piece piece, const Move& move){

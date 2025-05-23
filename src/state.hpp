@@ -15,7 +15,7 @@ namespace Sigmoid{
         std::array<Piece, 64> mailBox;
         uint8_t enPassantSquare = 0;
         uint64_t zobristKey = 0ULL;
-        uint64_t halfMove = 0, fullMove = 0;
+        uint16_t halfMove = 0, fullMove = 0;
 
         uint8_t castling = 0;
 
@@ -47,6 +47,12 @@ namespace Sigmoid{
             k = 1 << 2,
             q = 1 << 3
         };
+
+        static inline constexpr int K_CASTLING_BIT = 0;
+        static inline constexpr int Q_CASTLING_BIT = 1;
+
+        static inline constexpr int k_CASTLING_BIT = 2;
+        static inline constexpr int q_CASTLING_BIT = 3;
 
         static inline const std::map<char, int> castlingIndexes = {{'K', 0}, {'Q', 1}, {'k', 2}, {'q', 3}};
 
@@ -93,9 +99,9 @@ namespace Sigmoid{
         void disable_castling_rook_move(int fromSq){
             int index;
             if (us == WHITE)
-                index = fromSq == 63 ? 0 : fromSq == 56 ? 1 : -1;
+                index = fromSq == 63 ? K_CASTLING_BIT : fromSq == 56 ? Q_CASTLING_BIT : -1;
             else
-                index = fromSq == 7 ? 2 : fromSq == 0 ? 3 : -1;
+                index = fromSq == 7 ? k_CASTLING_BIT : fromSq == 0 ? q_CASTLING_BIT : -1;
 
             if (index != -1)
                 disable_castling_index(index);
