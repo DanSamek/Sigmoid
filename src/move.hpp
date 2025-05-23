@@ -24,11 +24,15 @@ namespace Sigmoid{
             PROMO_QUEEN = 6
         };
 
+        uint16_t data = 0;
+
+        Move() = default;
+
         Move(int from, int to, SpecialType type = NONE){
             set_data(from, to, type);
         }
 
-        uint16_t data = 0;
+        bool operator==(const Move& move) const = default;
 
         uint8_t from() const{
             uint8_t result = data & SQ_MASK;

@@ -6,17 +6,23 @@
 #include "move.hpp"
 #include "constants.hpp"
 
-namespace Sigmoid{
+namespace Sigmoid {
 
+    // TODO sort + score [?]
     struct MoveList {
+
         void add(const Move& move){
-            _moves[index++] = move;
+            moves[size++] = move;
         }
 
-        // TODO iterators + sort + score [?]
+        Move get(){
+            return iter_index < size ? moves[iter_index++] : Move::none();
+        }
+
     private:
-        std::array<Move, MAX_POSSIBLE_MOVES> _moves;
-        int index = 0;
+        std::array<Move, MAX_POSSIBLE_MOVES> moves;
+        int size = 0;
+        int iter_index = 0;
 
     };
 }

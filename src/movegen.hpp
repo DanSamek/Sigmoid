@@ -12,15 +12,15 @@
 namespace Sigmoid{
     // Pseudo-legal movegen.
     struct Movegen{
-        // TODO ! captures.
+
         template<bool captures>
-        static void generate_moves(const State& state, const bool whoPlay, MoveList& moveList) {
-            if (whoPlay == Color::white()) generate_moves<captures, Color::white()>(state, moveList);
-            else generate_moves<captures, Color::black()>(state, moveList);
+        static void generate_moves(const State& state, const Color whoPlay, MoveList& moveList) {
+            if (whoPlay == Color::white()) generate_moves_<captures, Color::white()>(state, moveList);
+            else generate_moves_<captures, Color::black()>(state, moveList);
         }
 
         template<bool captures, Color us>
-        static void generate_moves(const State& state, MoveList& moveList){
+        static void generate_moves_(const State& state, MoveList& moveList){
 
             uint64_t friendly_bits = 0ULL;
             uint64_t enemy_bits = 0ULL;
@@ -28,14 +28,15 @@ namespace Sigmoid{
 
             for (const PairBitboard& pb : state.bitboards){
                 friendly_bits |= pb.get<us>();
-                enemy_bits    |= pb.get<~us>();
+                enemy_bits    |= pb.get<opp<us>()>();
             }
             merged_bits = friendly_bits | enemy_bits;
 
             auto bitboard_to_moves = [&] (int fromSq, uint64_t bb, Move::SpecialType specialType = Move::NONE){
                 int to_sq;
-                while (bb && (to_sq = bit_scan_forward_pop_lsb(bb)) && !get_nth_bit(friendly_bits, to_sq)){
-                    moveList.add(Move(fromSq, to_sq, specialType));
+                while (bb && (to_sq = bit_scan_forward_pop_lsb(bb))){
+                    if (!get_nth_bit(friendly_bits, to_sq))
+                        moveList.add(Move(fromSq, to_sq, specialType));
                 }
             };
 
@@ -77,8 +78,9 @@ namespace Sigmoid{
             }
 
             // King
-            pos = state.bitboards[KING].get<us>();
-            bitboard_to_moves(kingMoves[pos]);
+            bb = state.bitboards[KING].get<us>();
+            pos = bit_scan_forward_pop_lsb(bb);
+            bitboard_to_moves(pos, kingMoves[pos]);
             const auto castlingMasks = CASTLING_FREE_MASKS[us];
 
             if (!captures && state.is_castling_set<us, false>() && (castlingMasks[K_CASTLE] & merged_bits) == 0){
@@ -93,8 +95,8 @@ namespace Sigmoid{
             //  - simple move
             //  - pre-promotion rank
             //  - double move
-            constexpr uint64_t pawn_double_push_bb = us == Color::white() ? WHITE_PAWN_START_BB : BLACK_PAWN_START_BB;
-            constexpr uint64_t promo_ray_bb = us == Color::white() ? BLACK_PAWN_START_BB : WHITE_PAWN_START_BB;
+            const int64_t pawn_double_push_bb =  PAWN_STARTS[us]; //   us == Color::white() ? WHITE_PAWN_START_BB : BLACK_PAWN_START_BB; + TODO fix template magic - make it constexpr
+            const uint64_t promo_ray_bb = PAWN_STARTS[opp<us>()]; //  us == Color::white() ? BLACK_PAWN_START_BB : WHITE_PAWN_START_BB;
 
             uint64_t double_push_pawns = state.bitboards[PAWN].get<us>() & pawn_double_push_bb;
             uint64_t promo_pawns       = state.bitboards[PAWN].get<us>() & promo_ray_bb;
@@ -125,7 +127,7 @@ namespace Sigmoid{
                 bb = (pawnAttackMoves[us][pos] & enemy_bits);
 
                 uint64_t q_moves = ((pawnQuietMoves[us][pos] & (~merged_bits)) * !captures);
-                const uint64_t opp_pawn_mask = pawnQuietMoves[~us][(us == Color::white() ? pos - 16 : pos + 16)];
+                const uint64_t opp_pawn_mask = pawnQuietMoves[opp<us>()][(us == Color::white() ? pos - 16 : pos + 16)];
 
                 if ((q_moves & opp_pawn_mask) == 0ULL){
                     q_moves = 0ULL;
@@ -135,7 +137,7 @@ namespace Sigmoid{
             }
         }
 
-        void init(){
+        static void init(){
             Magics::init();
             generate_move_bitboards<KNIGHT>();
             generate_move_bitboards<KING>();
@@ -212,6 +214,8 @@ namespace Sigmoid{
 
         static inline constexpr uint64_t BLACK_PAWN_START_BB = 0xff00;
         static inline constexpr uint64_t WHITE_PAWN_START_BB = 0xff000000000000;
+
+        static inline constexpr uint64_t PAWN_STARTS[2] = {WHITE_PAWN_START_BB, BLACK_PAWN_START_BB};
 
         static inline std::array<uint64_t, 64> kingMoves, knightMoves;
         static inline std::array<std::array<uint64_t, 64>, 2> pawnQuietMoves, pawnAttackMoves;

@@ -54,13 +54,17 @@ namespace Sigmoid{
             set_nth_bit(castling, castlingIndexes.at(c));
         }
 
+        void disable_castling_index(int bit){
+            pop_nth_bit(castling, bit);
+        }
+
         template<Color us>
-        uint8_t get_k_castling(){
+        uint8_t get_k_castling() const{
             return us == Color::white() ? K : k;
         }
 
         template<Color us>
-        uint8_t get_q_castling(){
+        uint8_t get_q_castling() const{
             return us == Color::white() ? Q : q;
         }
 
@@ -70,8 +74,13 @@ namespace Sigmoid{
             castling ^= disable;
         }
 
+        template<Color us>
+        bool is_some_castling_set() const{
+            return is_castling_set<us, true>() || is_castling_set<us, false>();
+        }
+
         template<Color us, bool Q>
-        bool is_castling_set(){
+        bool is_castling_set() const{
             if constexpr (Q){
                 return (get_q_castling<us>() & castling) != 0;
             }
@@ -80,6 +89,17 @@ namespace Sigmoid{
             }
         }
 
+        template<Color us>
+        void disable_castling_rook_move(int fromSq){
+            int index;
+            if (us == WHITE)
+                index = fromSq == 63 ? 0 : fromSq == 56 ? 1 : -1;
+            else
+                index = fromSq == 7 ? 2 : fromSq == 0 ? 3 : -1;
+
+            if (index != -1)
+                disable_castling_index(index);
+        }
     };
 }
 

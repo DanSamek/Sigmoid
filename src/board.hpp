@@ -23,9 +23,7 @@ namespace Sigmoid {
         Color whoPlay;
         State currentState;
 
-        Board(): ply(0) {
-
-        }
+        Board(): ply(0) { }
 
         bool is_capture(const Move& move){
             return currentState.mailBox[move.to()] != NONE;
@@ -35,7 +33,6 @@ namespace Sigmoid {
             return currentState.mailBox[square];
         }
 
-
         bool make_move(const Move& move){
             return whoPlay == Color::white() ? make_move<Color::white()>(move) : make_move<Color::black()>(move);
         }
@@ -43,12 +40,11 @@ namespace Sigmoid {
         // TODO nnue.push().
         // TODO update zobrist hash
         // TODO NNUE updates.
-
         template<Color us>
         bool make_move(const Move& move) {
-            State new_state = currentState;
-            if (is_illegal<us>(new_state, move)) return false;
+            if (is_illegal<us>(currentState, move)) return false;
 
+            State new_state = currentState;
             const bool is_cap = is_capture(move);
             const Piece piece = at(move.from());
             const int from = move.from();
@@ -80,9 +76,17 @@ namespace Sigmoid {
             new_state.mailBox[from] = NONE;
             new_state.mailBox[to] = to_piece;
 
+            disable_castling<us>(new_state, piece, move);
+
+            uint64_t tmp = new_state.bitboards[KING].get<us>();
+            int new_king_pos = bit_scan_forward_pop_lsb(tmp);
+            if (Movegen::is_square_attacked<us>(new_state, new_king_pos))
+                return false;
+
             whoPlay = whoPlay.flip();
             stateStack[ply] = currentState;
-            currentState = std::move(new_state); // Maybe fix [?]
+            currentState = new_state;
+
             ply++;
             return true;
         }
@@ -157,6 +161,18 @@ namespace Sigmoid {
             ss >> currentState.halfMove >> currentState.fullMove;
         }
 
+
+        template<Color us>
+        void disable_castling(State& state, const Piece piece, const Move& move){
+            if (!state.is_some_castling_set<us>())
+                return;
+
+            if (piece == ROOK)
+                state.disable_castling_rook_move<us>(move.to());
+
+            if (piece == KING)
+                state.disable_castling<us>();
+        }
 
         template<Color us>
         void handle_castling(State& state, int from, int to){
