@@ -44,7 +44,10 @@ namespace Sigmoid {
         bool make_move(const Move& move) {
             if (is_illegal<us>(currentState, move)) return false;
 
+            constexpr Color op = opp<us>();
             State new_state = currentState;
+            new_state.enPassantSquare = 0;
+
             const bool is_cap = is_capture(move);
             const Piece piece = at(move.from());
             const int from = move.from();
@@ -58,18 +61,18 @@ namespace Sigmoid {
             {
                 Piece captured = new_state.mailBox[to];
                 assert(captured != NONE);
-                new_state.bitboards[captured].pop_bit<opp<us>()>(to);
                 disable_cap_castling<us>(new_state, move);
+                new_state.bitboards[captured].pop_bit<op>(to);
             }
-            else if (promo_piece != NONE)
-                to_piece = promo_piece;
-
             else if (special_type == Move::EN_PASSANT)
                 handle_ep<us>(new_state, to);
             else if (special_type == Move::CASTLE)
                 handle_castling<us>(new_state, from, to);
-            else if (piece == Piece::PAWN && abs(from - to) > 8)
+            else if (special_type == Move::NONE && piece == Piece::PAWN && abs(from - to) > 8)
                 new_state.enPassantSquare = us == WHITE ? from - 8 : from + 8;
+
+            if (promo_piece != NONE)
+                to_piece = promo_piece;
 
             new_state.bitboards[piece].pop_bit<us>(from);
             new_state.bitboards[to_piece].set_bit<us>(to);
@@ -148,6 +151,8 @@ namespace Sigmoid {
                 }
                 i++;
             }
+            else
+                i += 2;
 
             // En-passant
             if (fen[i] != '-'){
@@ -170,7 +175,7 @@ namespace Sigmoid {
             uint64_t enemy_rook_bb_cpy = state.bitboards[ROOK].get<opp<us>()>();
 
             int to = move.to();
-            if (us == BLACK){
+            if constexpr (us.data == BLACK){
                 if (to == 63 && get_nth_bit(enemy_rook_bb_cpy, to))
                     state.disable_castling_index(State::K_CASTLING_BIT);
 
@@ -181,9 +186,15 @@ namespace Sigmoid {
                 if (to == 7 && get_nth_bit(enemy_rook_bb_cpy, to))
                     state.disable_castling_index(State::k_CASTLING_BIT);
 
-                if (to == 3 && get_nth_bit(enemy_rook_bb_cpy, to))
+                if (to == 0 && get_nth_bit(enemy_rook_bb_cpy, to))
                     state.disable_castling_index(State::q_CASTLING_BIT);
             }
+        }
+
+        template<Color us>
+        void move_piece(State& state, int from, int to, Piece piece){
+            state.bitboards[piece].pop_bit<us>(from);
+            state.bitboards[piece].set_bit<us>(to);
         }
 
         template<Color us>
@@ -192,7 +203,7 @@ namespace Sigmoid {
                 return;
 
             if (piece == ROOK)
-                state.disable_castling_rook_move<us>(move.to());
+                state.disable_castling_rook_move<us>(move.from());
 
             if (piece == KING)
                 state.disable_castling<us>();
@@ -200,14 +211,16 @@ namespace Sigmoid {
 
         template<Color us>
         void handle_castling(State& state, int from, int to){
-            const bool king_side = from > to;
+            const bool king_side = from < to;
             if (king_side){
                 state.mailBox[to + 1] = NONE;
                 state.mailBox[to - 1] = ROOK;
+                move_piece<us>(state, to + 1, to - 1, ROOK);
             }
             else{
-                state.mailBox[to - 1] = NONE;
+                state.mailBox[to - 2] = NONE;
                 state.mailBox[to + 1] = ROOK;
+                move_piece<us>(state, to - 2, to + 1, ROOK);
             }
             state.disable_castling<us>();
         }
@@ -220,7 +233,7 @@ namespace Sigmoid {
         }
 
         // Only for debug.
-        void print_state() {
+        void print_state() const{
             for (int row = 0; row < 8; row++){
                 for (int col = 0; col < 8; col++){
                     int i = get_square(row, col);
@@ -254,7 +267,14 @@ namespace Sigmoid {
         template<Color us>
         bool is_illegal(const State& state, const Move& move){
             if (move.special_type() == Move::CASTLE){
-                const bool kingSide = move.from() > move.to();
+                const bool kingSide = move.from() < move.to();
+
+                if (kingSide && !state.is_castling_set<us, false>())
+                    return false;
+
+                if (!kingSide && !state.is_castling_set<us, true>())
+                    return false;
+
                 bool result = Movegen::is_square_attacked<us>(state, move.from());
                 result |= Movegen::is_square_attacked<us>(state, kingSide ? move.from() + 1 : move.from() - 1);
                 result |= Movegen::is_square_attacked<us>(state, move.to());
@@ -270,7 +290,6 @@ namespace Sigmoid {
         // TODO -- will be used in datagen -- oneday.
         std::string get_fen(){}
     };
-
 }
 
 #endif //SIGMOID_BOARD_HPP

@@ -34,7 +34,8 @@ namespace Sigmoid{
 
             auto bitboard_to_moves = [&] (int fromSq, uint64_t bb, Move::SpecialType specialType = Move::NONE){
                 int to_sq;
-                while (bb && (to_sq = bit_scan_forward_pop_lsb(bb))){
+                while (bb){
+                    to_sq = bit_scan_forward_pop_lsb(bb);
                     if (!get_nth_bit(friendly_bits, to_sq))
                         moveList.add(Move(fromSq, to_sq, specialType));
                 }
@@ -50,21 +51,26 @@ namespace Sigmoid{
             uint64_t moves;
             // Rook
             uint64_t bb = state.bitboards[ROOK].get<us>();
-            while(bb && (pos = bit_scan_forward_pop_lsb(bb)) && (moves = Magics::get_rook_moves(merged_bits, pos))){
+            while(bb){
+                pos = bit_scan_forward_pop_lsb(bb);
+                moves = Magics::get_rook_moves(merged_bits, pos);
                 filter_captures(moves);
                 bitboard_to_moves(pos, moves);
             }
 
             // Bishop
             bb = state.bitboards[BISHOP].get<us>();
-            while(bb && (pos = bit_scan_forward_pop_lsb(bb)) && (moves = Magics::get_bishop_moves(merged_bits, pos))){
+            while(bb){
+                pos = bit_scan_forward_pop_lsb(bb);
+                moves = Magics::get_bishop_moves(merged_bits, pos);
                 filter_captures(moves);
                 bitboard_to_moves(pos, moves);
             }
 
             // Queen
             bb = state.bitboards[QUEEN].get<us>();
-            while(bb && (pos = bit_scan_forward_pop_lsb(bb))){
+            while(bb){
+                pos = bit_scan_forward_pop_lsb(bb);
                 moves = Magics::get_bishop_moves(merged_bits, pos) | Magics::get_rook_moves(merged_bits, pos);
                 filter_captures(moves);
                 bitboard_to_moves(pos, moves);
@@ -72,7 +78,9 @@ namespace Sigmoid{
 
             // Knight
             bb = state.bitboards[KNIGHT].get<us>();
-            while(bb && (pos = bit_scan_forward_pop_lsb(bb)) && (moves = knightMoves[pos])){
+            while(bb){
+                pos = bit_scan_forward_pop_lsb(bb);
+                moves = knightMoves[pos];
                 filter_captures(moves);
                 bitboard_to_moves(pos, moves);
             }
@@ -102,9 +110,10 @@ namespace Sigmoid{
             uint64_t promo_pawns       = state.bitboards[PAWN].get<us>() & promo_ray_bb;
             uint64_t simple_push_pawns = state.bitboards[PAWN].get<us>() ^ (double_push_pawns | promo_pawns);
 
-            const uint64_t ep_bitmask = state.enPassantSquare != NO_SQUARE ? (1 << state.enPassantSquare) : 0ULL;
+            const uint64_t ep_bitmask = state.enPassantSquare != NO_SQUARE ? (1ULL << state.enPassantSquare) : 0ULL;
 
-            while (simple_push_pawns && (pos = bit_scan_forward_pop_lsb(simple_push_pawns))) {
+            while (simple_push_pawns) {
+                pos = bit_scan_forward_pop_lsb(simple_push_pawns);
                 bb = ((pawnQuietMoves[us][pos] & (~merged_bits)) * !captures)  | (pawnAttackMoves[us][pos] & enemy_bits);
                 bitboard_to_moves(pos, bb);
                 // en-passant.
@@ -112,10 +121,12 @@ namespace Sigmoid{
                 bitboard_to_moves(pos, bb, Move::EN_PASSANT);
             }
 
-            while (promo_pawns && (pos = bit_scan_forward_pop_lsb(promo_pawns))) {
+            while (promo_pawns) {
+                pos = bit_scan_forward_pop_lsb(promo_pawns);
                 bb = ((pawnQuietMoves[us][pos] & (~merged_bits)) * !captures) | (pawnAttackMoves[us][pos] & enemy_bits);
                 int to_sq;
-                while (bb && (to_sq = bit_scan_forward_pop_lsb(bb))){
+                while (bb){
+                    to_sq = bit_scan_forward_pop_lsb(bb);
                     moveList.add(Move(pos, to_sq, Move::PROMO_BISHOP));
                     moveList.add(Move(pos, to_sq, Move::PROMO_KNIGHT));
                     moveList.add(Move(pos, to_sq, Move::PROMO_QUEEN));
@@ -123,7 +134,8 @@ namespace Sigmoid{
                 }
             }
 
-            while (double_push_pawns && (pos = bit_scan_forward_pop_lsb(double_push_pawns))){
+            while (double_push_pawns){
+                pos = bit_scan_forward_pop_lsb(double_push_pawns);
                 bb = (pawnAttackMoves[us][pos] & enemy_bits);
 
                 uint64_t q_moves = ((pawnQuietMoves[us][pos] & (~merged_bits)) * !captures);
@@ -163,7 +175,7 @@ namespace Sigmoid{
             if(knightMoves[square] & state.bitboards[KNIGHT].get<op>())
                 return true;
 
-            if(pawnAttackMoves[op][square] & state.bitboards[PAWN].get<op>())
+            if(pawnAttackMoves[us][square] & state.bitboards[PAWN].get<op>())
                 return true;
 
             if(kingMoves[square] & state.bitboards[KING].get<op>())
@@ -268,7 +280,7 @@ namespace Sigmoid{
             auto& quiet_moves_bb  = pawnQuietMoves[color];
             auto& attack_moves_bb = pawnAttackMoves[color];
 
-            for (int rank = 1; rank < 7; rank++) {
+            for (int rank = 0; rank < 8; rank++) {
                 for (int file = 0; file < 8; file++) {
                     int square = get_square(rank, file);
 

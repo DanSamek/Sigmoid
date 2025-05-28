@@ -23,7 +23,7 @@ namespace Sigmoid{
         }
 
         template<Color color>
-        bool get(int square) {
+        bool get(int square) const{
             assert(square >= 0 && square <= 63);
             bool result = get_nth_bit(bitboards[color], square);
             return result;

@@ -36,7 +36,7 @@ namespace Sigmoid{
         }
 
         template<Color color>
-        bool get_bit(int square, Piece piece){
+        bool get_bit(int square, Piece piece) const{
             return bitboards[piece].get<color>(square);
         }
 
@@ -66,18 +66,20 @@ namespace Sigmoid{
 
         template<Color us>
         uint8_t get_k_castling() const{
-            return us == Color::white() ? K : k;
+            constexpr uint8_t result = us.data == WHITE ? K : k;
+            return result;
         }
 
         template<Color us>
         uint8_t get_q_castling() const{
-            return us == Color::white() ? Q : q;
+            constexpr uint8_t result = us.data == WHITE ? Q : q;
+            return result;
         }
 
         template<Color us>
         void disable_castling(){
             uint8_t disable = get_k_castling<us>() | get_q_castling<us>();
-            castling ^= disable;
+            castling &= ~disable;
         }
 
         template<Color us>

@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 #include <cassert>
+#include <sstream>
+
 #include "piece.hpp"
 
 namespace Sigmoid{
@@ -63,6 +65,27 @@ namespace Sigmoid{
 
         inline static Move none(){
             return Move(0,0);
+        }
+
+        std::string to_uci(){
+            std::ostringstream oss;
+            auto sq_to_uci = [](uint8_t square)->std::string{
+                int file = square / 8;
+                int rank = square % 8;
+
+                std::ostringstream oss;
+                oss << (char)(rank + 'a') << ((7 - file) + 1);
+                std::string result = oss.str();
+                return result;
+            };
+
+            oss << sq_to_uci(from());
+            oss << sq_to_uci(to());
+            if (promo_piece() != Piece::NONE)
+                oss << piece_char<Color::black()>(promo_piece());
+
+            std::string result = oss.str();
+            return result;
         }
 
     private:

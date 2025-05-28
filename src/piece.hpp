@@ -23,10 +23,10 @@ namespace Sigmoid{
     template<Color color>
     inline char piece_char(Piece p){
         char c = PIECE_MAP_CHAR.at(p);
-        if (color == Color::white()) c = toupper(c);
+        // TODO, check if this is okay ??
+        if constexpr (color.data == WHITE) c = toupper(c);
         return c;
     }
-
 }
 
 #endif //SIGMOID_PIECE_HPP
