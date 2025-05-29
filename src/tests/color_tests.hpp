@@ -15,21 +15,21 @@ struct ColorTests : public Test{
     }
 
     void run() const override{
-        Color color;
-        assert(color == Color::white());
-
-        color = color.flip();
-        assert(color == Color::black() == ~(~color));
+        Color color = Color::WHITE;
+        assert(color == WHITE);
 
         color = ~color;
-        assert(color == Color::white());
+        assert(color == BLACK == ~(~color));
 
-        color = Color::black();
-        assert(color == Color::black());
-        assert(color.flip() == Color::white());
+        color = ~color;
+        assert(color == WHITE);
 
-        color = Color::white();
-        assert(~color == opp<Color::white()>());
+        color = BLACK;
+        assert(color == BLACK);
+        assert(~color == WHITE);
+
+        color = WHITE;
+        assert(~color == ~WHITE);
 
     }
 };

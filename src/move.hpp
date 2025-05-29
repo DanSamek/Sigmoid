@@ -82,7 +82,7 @@ namespace Sigmoid{
             oss << sq_to_uci(from());
             oss << sq_to_uci(to());
             if (promo_piece() != Piece::NONE)
-                oss << piece_char<Color::black()>(promo_piece());
+                oss << piece_char<BLACK>(promo_piece());
 
             std::string result = oss.str();
             return result;

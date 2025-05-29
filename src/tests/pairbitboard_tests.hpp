@@ -18,20 +18,20 @@ struct PairBitboardTests : public Test{
     void run() const override{
         PairBitboard pb;
 
-        pb.set_bit<Color::white()>(5);
-        pb.set_bit<Color::black()>(4);
+        pb.set_bit<WHITE>(5);
+        pb.set_bit<BLACK>(4);
 
-        assert(pb.get<Color::white()>(5) == 1);
-        assert(pb.get<Color::black()>(5) == 0);
+        assert(pb.get<WHITE>(5) == 1);
+        assert(pb.get<BLACK>(5) == 0);
 
-        assert(pb.get<Color::white()>(4) == 0);
-        assert(pb.get<Color::black()>(4) == 1);
+        assert(pb.get<WHITE>(4) == 0);
+        assert(pb.get<BLACK>(4) == 1);
 
-        pb.pop_bit<Color::white()>(5);
-        pb.pop_bit<Color::black()>(4);
+        pb.pop_bit<WHITE>(5);
+        pb.pop_bit<BLACK>(4);
 
-        assert(pb.get<Color::white()>(5) == 0);
-        assert(pb.get<Color::black()>(4) == 0);
+        assert(pb.get<WHITE>(5) == 0);
+        assert(pb.get<BLACK>(4) == 0);
     }
 };
 

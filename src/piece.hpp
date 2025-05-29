@@ -23,8 +23,7 @@ namespace Sigmoid{
     template<Color color>
     inline char piece_char(Piece p){
         char c = PIECE_MAP_CHAR.at(p);
-        // TODO, check if this is okay ??
-        if constexpr (color.data == WHITE) c = toupper(c);
+        if constexpr (color == WHITE) c = toupper(c);
         return c;
     }
 }

@@ -12,7 +12,7 @@
 namespace Sigmoid{
     struct State{
         std::array<PairBitboard, 6> bitboards;
-        std::array<Piece, 64> mailBox;
+        std::array<Piece, 64> pieceMap;
         uint8_t enPassantSquare = 0;
         uint64_t zobristKey = 0ULL;
         uint16_t halfMove = 0, fullMove = 0;
@@ -23,7 +23,7 @@ namespace Sigmoid{
             for(PairBitboard& bb : bitboards)
                 bb.clear();
 
-            for (Piece& p : mailBox)
+            for (Piece& p : pieceMap)
                 p = NONE;
 
             zobristKey = castling = halfMove = fullMove = 0;
@@ -66,13 +66,13 @@ namespace Sigmoid{
 
         template<Color us>
         uint8_t get_k_castling() const{
-            constexpr uint8_t result = us.data == WHITE ? K : k;
+            constexpr uint8_t result = us == WHITE ? K : k;
             return result;
         }
 
         template<Color us>
         uint8_t get_q_castling() const{
-            constexpr uint8_t result = us.data == WHITE ? Q : q;
+            constexpr uint8_t result = us == WHITE ? Q : q;
             return result;
         }
 
@@ -100,7 +100,7 @@ namespace Sigmoid{
         template<Color us>
         void disable_castling_rook_move(int fromSq){
             int index;
-            if (us == WHITE)
+            if constexpr (us == WHITE)
                 index = fromSq == 63 ? K_CASTLING_BIT : fromSq == 56 ? Q_CASTLING_BIT : -1;
             else
                 index = fromSq == 7 ? k_CASTLING_BIT : fromSq == 0 ? q_CASTLING_BIT : -1;

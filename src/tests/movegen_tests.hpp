@@ -1,6 +1,8 @@
 #ifndef SIGMOID_MOVEGEN_TESTS_HPP
 #define SIGMOID_MOVEGEN_TESTS_HPP
 
+#include <chrono>
+
 #include "test.hpp"
 #include "../movegen.hpp"
 
@@ -16,37 +18,52 @@ struct MovegenTests : public Test{
         auto verify_bb = [&](uint64_t bb, Piece pc) ->void{
             int bit;
             while (bb && (bit = bit_scan_forward_pop_lsb(bb))){
-                if (board.currentState.mailBox[bit] == pc)
+                if (board.currentState.pieceMap[bit] == pc)
                     continue;
 
                 board.print_state();
                 std::cout << depth << std::endl;
-                assert(board.currentState.mailBox[bit] == pc);
+                assert(board.currentState.pieceMap[bit] == pc);
+                throw std::out_of_range("nah");
             }
         };
 
         int piece_cnt = 0;
         for (int i = Piece::PAWN; i <= Piece::KING; ++i){
             const PairBitboard& pbb = board.currentState.bitboards[i];
-            verify_bb(pbb.get<Color::white()>(), Piece(i));
-            verify_bb(pbb.get<Color::black()>(), Piece(i));
+            verify_bb(pbb.get<WHITE>(), Piece(i));
+            verify_bb(pbb.get<BLACK>(), Piece(i));
 
-            uint64_t tmp = pbb.get<Color::white()>() | pbb.get<Color::black()>();
+            uint64_t tmp = pbb.get<WHITE>() | pbb.get<BLACK>();
             piece_cnt += count_bits(tmp);
         }
 
         int non_piece_cnt = 0;
         for (int square = 0; square < 64; ++square){
-            non_piece_cnt += board.currentState.mailBox[square] == Piece::NONE;
+            non_piece_cnt += board.currentState.pieceMap[square] == Piece::NONE;
+        }
+        if (non_piece_cnt + piece_cnt != 64){
+            throw std::out_of_range("nah");
         }
         assert(non_piece_cnt + piece_cnt == 64);
     }
 
     void run() const override{
         Movegen::init();
+        run_perft("8/1p4p1/8/q1PK1P1r/3p1k2/8/4P3/4Q3 b - - 0 1", 5, 6323457 );
+        run_perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",5,4865609 );
+        run_perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",6,119060324 );
+        run_perft("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0", 6,11030083 );
+        run_perft("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0", 7,178633661 );
+        run_perft("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10",5, 164075551 );
+        run_perft("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", 5, 89941194 );
+        run_perft("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0", 5, 193690690 );
+        run_perft("8/8/8/1PpK4/5p2/4k3/8/8 b - - 0 24", 9, 133225511 );
+        run_perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 6, 119060324);
+
         run_perft("rnbqkbnr/ppppp1pp/8/8/5pP1/P1P5/1P1PPP1P/RNBQKBNR b KQkq g3 0 3", 1, 21 );
         run_perft("rnbqkbnr/ppppp1pp/8/8/5pP1/P1P5/1P1PPP1P/RNBQKBNR b KQkq g3 0 3", 3, 9365 );
-        run_perft("rnbqkbnr/ppppp1pp/8/8/4Pp2/P1P5/1P1P1PPP/RNBQKBNR b KQkq e3 0 3", 1, 21 );
+        run_perft("rnbqkbnr/ppppp1pp/8/8/4Pp2/P1P5/1P1P1PPP/RNBQKBNR b KQkq e3 0 3",    1, 21 );
         run_perft("rnbqkbnr/ppppp1pp/8/8/4Pp2/P1P5/1P1P1PPP/RNBQKBNR b KQkq e3 0 3", 3, 13010 );
         run_perft("1r2k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/1PN2Q1p/2PBBPPP/R3K2R b KQk a3 0 8", 1, 44 );
         run_perft("8/8/1k6/2b5/2pP4/8/5K2/8 b - d3 0 1", 1, 15 );
@@ -141,16 +158,7 @@ struct MovegenTests : public Test{
         run_perft("8/PPPk4/8/8/8/8/4Kppp/8 b - - 0 1", 6, 28859283 );
         run_perft("8/2k1p3/3pP3/3P2K1/8/8/8/8 w - - 0 1", 9, 7618365 );
         run_perft("3r4/2p1p3/8/1P1P1P2/3K4/5k2/8/8 b - - 0 1", 4, 28181 );
-        run_perft("8/1p4p1/8/q1PK1P1r/3p1k2/8/4P3/4Q3 b - - 0 1", 5, 6323457 );
-        run_perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",5,4865609 );
-        run_perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",6,119060324 );
-        run_perft("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0", 6,11030083 );
-        run_perft("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0", 7,178633661 );
-        run_perft("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10",5, 164075551 );
-        run_perft("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", 5, 89941194 );
-        run_perft("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0", 5, 193690690 );
-        run_perft("8/8/8/1PpK4/5p2/4k3/8/8 b - - 0 24", 9, 133225511 );
-        run_perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 6, 119060324);
+
 
     }
 
@@ -158,19 +166,34 @@ struct MovegenTests : public Test{
         Board board;
         std::cout << fen << std::endl;
         board.load_from_fen(fen);
-        board.print_state();
-        long long result = move_recursion(board, depth, depth);
-        assert(result == expected);
+        //board.print_state();
+        auto start = std::chrono::high_resolution_clock::now();
+        long long result = move_recursion<false>(board, depth, depth);
+        if (result == expected){
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            if (!duration) duration = 1;
+
+            std::cout << result << " == " << expected << std::endl;
+            std::cout << "nodes per second: " << (result / duration) * 1000 << " time: " << duration <<  std::endl;
+        }
+        else{
+            throw std::out_of_range("nah");
+        }
     }
 
+    template<bool debug>
     long long move_recursion(Board& board, int depth, const int maxDepth) const{
         if (depth == 0) return 1;
 
-        std::ostringstream space_stream;
-        int spaces = maxDepth - depth;
-        while (spaces--)
-            space_stream << "       ";
-        std::string space = space_stream.str();
+        [[maybe_unused]] std::string space;
+        if constexpr (debug){
+            std::ostringstream space_stream;
+            int spaces = maxDepth - depth;
+            while (spaces--)
+                space_stream << "       ";
+            space = space_stream.str();
+        }
 
         MoveList move_list;
         Movegen::generate_moves<false>(board.currentState, board.whoPlay, move_list);
@@ -182,18 +205,20 @@ struct MovegenTests : public Test{
             if (!board.make_move(move))
                 continue;
 
-           // std::cout << space << move.to_uci() << std::endl;
-            verify_board(board, depth);
+            if constexpr (debug){
+                verify_board(board, depth);
+            }
 
-            auto rec_result = move_recursion(board, depth - 1, maxDepth);
+            auto rec_result = move_recursion<debug>(board, depth - 1, maxDepth);
             result += rec_result;
             board.undo_move();
 
-            if (depth == maxDepth) {
-                std::ostringstream oss;
-                oss << space << move.to_uci() << ":" << rec_result << std::endl;
-                std::cout << oss.str();
-                // e8d8->e8f8
+            if constexpr (debug){
+                if (depth == maxDepth) {
+                    std::ostringstream oss;
+                    oss << space << move.to_uci() << ":" << rec_result << std::endl;
+                    std::cout << oss.str();
+                }
             }
         }
         return result;

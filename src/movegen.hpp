@@ -15,8 +15,8 @@ namespace Sigmoid{
 
         template<bool captures>
         static void generate_moves(const State& state, const Color whoPlay, MoveList& moveList) {
-            if (whoPlay == Color::white()) generate_moves_<captures, Color::white()>(state, moveList);
-            else generate_moves_<captures, Color::black()>(state, moveList);
+            if (whoPlay == WHITE) generate_moves_<captures, WHITE>(state, moveList);
+            else generate_moves_<captures, BLACK>(state, moveList);
         }
 
         template<bool captures, Color us>
@@ -28,7 +28,7 @@ namespace Sigmoid{
 
             for (const PairBitboard& pb : state.bitboards){
                 friendly_bits |= pb.get<us>();
-                enemy_bits    |= pb.get<opp<us>()>();
+                enemy_bits    |= pb.get<~us>();
             }
             merged_bits = friendly_bits | enemy_bits;
 
@@ -103,8 +103,8 @@ namespace Sigmoid{
             //  - simple move
             //  - pre-promotion rank
             //  - double move
-            const int64_t pawn_double_push_bb =  PAWN_STARTS[us];
-            const uint64_t promo_ray_bb = PAWN_STARTS[opp<us>()];
+            constexpr int64_t pawn_double_push_bb =  PAWN_STARTS[us];
+            constexpr uint64_t promo_ray_bb = PAWN_STARTS[~us];
 
             uint64_t double_push_pawns = state.bitboards[PAWN].get<us>() & pawn_double_push_bb;
             uint64_t promo_pawns       = state.bitboards[PAWN].get<us>() & promo_ray_bb;
@@ -139,7 +139,7 @@ namespace Sigmoid{
                 bb = (pawnAttackMoves[us][pos] & enemy_bits);
 
                 uint64_t q_moves = ((pawnQuietMoves[us][pos] & (~merged_bits)) * !captures);
-                const uint64_t opp_pawn_mask = pawnQuietMoves[opp<us>()][(us == Color::white() ? pos - 16 : pos + 16)];
+                uint64_t opp_pawn_mask = pawnQuietMoves[~us][(us == WHITE ? pos - 16 : pos + 16)];
 
                 if ((q_moves & opp_pawn_mask) == 0ULL){
                     q_moves = 0ULL;
@@ -154,16 +154,19 @@ namespace Sigmoid{
             generate_move_bitboards<KNIGHT>();
             generate_move_bitboards<KING>();
 
-            generate_pawn_bitboards<Color::white()>();
-            generate_pawn_bitboards<Color::black()>();
+            generate_pawn_bitboards<WHITE>();
+            generate_pawn_bitboards<BLACK>();
         }
 
         template<Color us>
-        static bool is_square_attacked(const State& state, int square){
-            uint64_t all = 0ULL;
-            constexpr Color op = opp<us>();
-            for (const PairBitboard& pb : state.bitboards){
-                all |= pb.get<us>() | pb.get<op>();
+        inline static bool is_square_attacked(const State& state, int square, uint64_t all = -1){
+            constexpr Color op = ~us;
+            if (all == -1)
+            {
+                all = 0ULL;
+                for (const PairBitboard& pb : state.bitboards){
+                    all |= pb.get<us>() | pb.get<op>();
+                }
             }
 
             if (Magics::get_rook_moves(all, square) & (state.bitboards[ROOK].get<op>() | state.bitboards[QUEEN].get<op>()))
@@ -192,18 +195,18 @@ namespace Sigmoid{
                 for (int square = 0; square < 64; square++){
                     std::cout << square << std::endl;
                     std::cout << "QUIET" << std::endl;
-                    uint64_t bb_w_q = pawnQuietMoves[Color::white()][square];
+                    uint64_t bb_w_q = pawnQuietMoves[WHITE][square];
                     print_bitboard(bb_w_q);
                     std::cout << std::endl;
-                    uint64_t bb_b_q = pawnQuietMoves[Color::black()][square];
+                    uint64_t bb_b_q = pawnQuietMoves[BLACK][square];
                     print_bitboard(bb_b_q);
                     std::cout << std::endl;
 
                     std::cout << "ATTACK" << std::endl;
-                    bb_w_q = pawnAttackMoves[Color::white()][square];
+                    bb_w_q = pawnAttackMoves[WHITE][square];
                     print_bitboard(bb_w_q);
                     std::cout << std::endl;
-                    bb_b_q = pawnAttackMoves[Color::black()][square];
+                    bb_b_q = pawnAttackMoves[BLACK][square];
                     print_bitboard(bb_b_q);
                     std::cout << std::endl;
                     std::cout << std::endl;
@@ -284,7 +287,7 @@ namespace Sigmoid{
                 for (int file = 0; file < 8; file++) {
                     int square = get_square(rank, file);
 
-                    if ((rank == 1 && color == Color::black()) || (rank == 6 && color == Color::white()))
+                    if ((rank == 1 && color == BLACK) || (rank == 6 && color == WHITE))
                         set_bits_for_square<2, 2>(PAWN_QUIET_MOVES_2[color], quiet_moves_bb[square], rank, file);
                     else
                         set_bits_for_square<1, 1>(PAWN_QUIET_MOVES_1[color], quiet_moves_bb[square], rank, file);

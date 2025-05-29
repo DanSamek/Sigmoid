@@ -18,25 +18,25 @@ namespace Sigmoid{
         }
 
         template<Color color>
-        uint64_t get() const{
+        inline uint64_t get() const{
             return bitboards[color];
         }
 
         template<Color color>
-        bool get(int square) const{
+        inline bool get(int square) const{
             assert(square >= 0 && square <= 63);
             bool result = get_nth_bit(bitboards[color], square);
             return result;
         }
 
         template<Color color>
-        void set_bit(int square){
+        inline void set_bit(int square){
             assert(square >= 0 && square <= 63);
             set_nth_bit(bitboards[color], square);
         }
 
         template<Color color>
-        void pop_bit(int square){
+        inline void pop_bit(int square){
             assert(square >= 0 && square <= 63);
             pop_nth_bit(bitboards[color], square);
         }
