@@ -12,5 +12,7 @@ namespace Sigmoid {
     constexpr int NO_EN_PASSANT_SQUARE = -1;
 
     constexpr uint8_t NO_SQUARE = -1;
+
+    const std::string VERSION = "0.0.1";
 }
 #endif //SIGMOID_CONSTANTS_HPP

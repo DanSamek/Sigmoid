@@ -5,10 +5,10 @@
 
 #include "move.hpp"
 #include "constants.hpp"
+#include "movegen.hpp"
 
 namespace Sigmoid {
 
-    // TODO sort + score [?]
     struct MoveList {
 
         void add(const Move& move){
@@ -16,13 +16,13 @@ namespace Sigmoid {
         }
 
         Move get(){
-            return iter_index < size ? moves[iter_index++] : Move::none();
+            return iterIndex < size ? moves[iterIndex++] : Move::none();
         }
 
     private:
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
         int size = 0;
-        int iter_index = 0;
+        int iterIndex = 0;
 
     };
 }

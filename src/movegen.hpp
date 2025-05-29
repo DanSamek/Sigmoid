@@ -149,13 +149,16 @@ namespace Sigmoid{
             }
         }
 
+        static inline bool ready = false;
         static void init(){
+            if (ready) return;
             Magics::init();
             generate_move_bitboards<KNIGHT>();
             generate_move_bitboards<KING>();
 
             generate_pawn_bitboards<WHITE>();
             generate_pawn_bitboards<BLACK>();
+            ready = true;
         }
 
         template<Color us>
