@@ -83,9 +83,8 @@ namespace Sigmoid{
                 if (str_move.empty())
                     continue;
 
-                MoveList mp;
+                MoveList<false> mp(&board);
                 Move move;
-                Movegen::generate_moves<false>(board.currentState, board.whoPlay, mp);
 
                 while ((move = mp.get()) != Move::none()){
                     if (move.to_uci().find(str_move) == std::string::npos)

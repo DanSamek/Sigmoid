@@ -9,19 +9,25 @@
 
 namespace Sigmoid {
 
+    template<bool captures>
     struct MoveList {
-
-        void add(const Move& move){
-            moves[size++] = move;
-        }
+        MoveList(const Board* board) : board(board){}
 
         Move get(){
+            if (!generated){
+                Movegen::generate_moves<captures>(board->currentState, board->whoPlay, moves, size);
+                generated = true;
+            }
             return iterIndex < size ? moves[iterIndex++] : Move::none();
         }
 
     private:
+        const Board* board;
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
         int size = 0;
+
+
+        bool generated = false;
         int iterIndex = 0;
 
     };

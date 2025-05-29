@@ -4,7 +4,7 @@
 #include <chrono>
 
 #include "test.hpp"
-#include "../movegen.hpp"
+#include "../movelist.hpp"
 
 using namespace Sigmoid;
 
@@ -195,8 +195,7 @@ struct MovegenTests : public Test{
             space = space_stream.str();
         }
 
-        MoveList move_list;
-        Movegen::generate_moves<false>(board.currentState, board.whoPlay, move_list);
+        MoveList<false> move_list(&board);
 
         long long result = 0;
         Move move;

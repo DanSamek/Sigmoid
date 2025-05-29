@@ -19,8 +19,7 @@ namespace Sigmoid {
 
         void start_searching(const Options& options){
             Board cpy = options.board;
-            MoveList ml;
-            Movegen::generate_moves<false>(options.board.currentState, options.board.whoPlay, ml);
+            MoveList<false> ml(&options.board);
             Move move;
             while ((move = ml.get()) != Move::none()){
                 if (!cpy.make_move(move))

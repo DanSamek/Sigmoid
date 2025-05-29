@@ -7,20 +7,19 @@
 #include "constants.hpp"
 #include "board.hpp"
 #include "magics.hpp"
-#include "movelist.hpp"
 
 namespace Sigmoid{
     // Pseudo-legal movegen.
     struct Movegen{
 
         template<bool captures>
-        static void generate_moves(const State& state, const Color whoPlay, MoveList& moveList) {
-            if (whoPlay == WHITE) generate_moves_<captures, WHITE>(state, moveList);
-            else generate_moves_<captures, BLACK>(state, moveList);
+        static void generate_moves(const State& state, const Color whoPlay, std::array<Move, MAX_POSSIBLE_MOVES>& moves, int& size) {
+            if (whoPlay == WHITE) generate_moves_<captures, WHITE>(state, moves, size);
+            else generate_moves_<captures, BLACK>(state, moves, size);
         }
 
         template<bool captures, Color us>
-        static void generate_moves_(const State& state, MoveList& moveList){
+        static void generate_moves_(const State& state, std::array<Move, MAX_POSSIBLE_MOVES>& movesRef, int& size){
 
             uint64_t friendly_bits = 0ULL;
             uint64_t enemy_bits = 0ULL;
@@ -32,12 +31,16 @@ namespace Sigmoid{
             }
             merged_bits = friendly_bits | enemy_bits;
 
+            auto add = [&](const Move& move){
+                movesRef[size++] = move;
+            };
+
             auto bitboard_to_moves = [&] (int fromSq, uint64_t bb, Move::SpecialType specialType = Move::NONE){
                 int to_sq;
                 while (bb){
                     to_sq = bit_scan_forward_pop_lsb(bb);
                     if (!get_nth_bit(friendly_bits, to_sq))
-                        moveList.add(Move(fromSq, to_sq, specialType));
+                        add(Move(fromSq, to_sq, specialType));
                 }
             };
 
@@ -92,10 +95,10 @@ namespace Sigmoid{
             const auto castlingMasks = CASTLING_FREE_MASKS[us];
 
             if (!captures && state.is_castling_set<us, false>() && (castlingMasks[K_CASTLE] & merged_bits) == 0){
-                moveList.add(Move(pos, pos + 2, Move::CASTLE));
+                add(Move(pos, pos + 2, Move::CASTLE));
             }
             if (!captures && state.is_castling_set<us, true>() && (castlingMasks[Q_CASTLE] & merged_bits) == 0){
-                moveList.add(Move(pos, pos - 2, Move::CASTLE));
+                add(Move(pos, pos - 2, Move::CASTLE));
             }
 
             // Pawns
@@ -127,10 +130,10 @@ namespace Sigmoid{
                 int to_sq;
                 while (bb){
                     to_sq = bit_scan_forward_pop_lsb(bb);
-                    moveList.add(Move(pos, to_sq, Move::PROMO_BISHOP));
-                    moveList.add(Move(pos, to_sq, Move::PROMO_KNIGHT));
-                    moveList.add(Move(pos, to_sq, Move::PROMO_QUEEN));
-                    moveList.add(Move(pos, to_sq, Move::PROMO_ROOK));
+                    add(Move(pos, to_sq, Move::PROMO_BISHOP));
+                    add(Move(pos, to_sq, Move::PROMO_KNIGHT));
+                    add(Move(pos, to_sq, Move::PROMO_QUEEN));
+                    add(Move(pos, to_sq, Move::PROMO_ROOK));
                 }
             }
 

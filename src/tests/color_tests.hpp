@@ -19,7 +19,7 @@ struct ColorTests : public Test{
         assert(color == WHITE);
 
         color = ~color;
-        assert(color == BLACK == ~(~color));
+        assert(color == BLACK && BLACK == ~(~color));
 
         color = ~color;
         assert(color == WHITE);
