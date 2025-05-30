@@ -3,6 +3,7 @@
 
 #include "move.hpp"
 #include "board.hpp"
+#include "tt.hpp"
 
 namespace Sigmoid {
 
@@ -13,7 +14,7 @@ namespace Sigmoid {
             int wInc, bInc;
 
             int threadCnt;
-            // int ttSizeMb; TODO TTStruct here.
+            TranspositionTable* tt;
             Board board;
         };
 

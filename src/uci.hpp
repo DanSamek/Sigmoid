@@ -7,6 +7,7 @@
 #include "board.hpp"
 #include "engine.hpp"
 #include "movegen.hpp"
+#include "movelist.hpp"
 
 #ifndef SIGMOID_UCI_HPP
 #define SIGMOID_UCI_HPP
@@ -17,6 +18,12 @@ namespace Sigmoid{
         int ttSize = 16;
         Board board;
         Engine engine;
+        TranspositionTable tt;
+
+        Uci() {
+            tt = TranspositionTable();
+            tt.resize(ttSize);
+        }
 
         void loop(){
             std::string line;
@@ -33,7 +40,21 @@ namespace Sigmoid{
                     command_position(line);
                 if (line.find("go") != std::string::npos)
                     command_go(line);
+                if (line.find("setoption") != std::string::npos)
+                    command_set_option(line);
+
                 // TODO handle uci options.
+            }
+        }
+
+        void command_set_option(const std::string& command) {
+            std::istringstream stream (command);
+            std::string type, value;
+            stream >> type >> type >> type >> value >> value;
+
+            if(type == "Hash"){
+                ttSize = std::stoi(value);
+                init_tt();
             }
         }
 
@@ -101,6 +122,7 @@ namespace Sigmoid{
             std::cout << "id name Sigmoid " << VERSION << std::endl;
             std::cout << "id author Daniel Samek" << std::endl;
 
+            std::cout << "option name Hash type spin default "<< ttSize << " min 1 max 128000" << std::endl;
             // all options. TODO
         }
 
@@ -114,6 +136,10 @@ namespace Sigmoid{
         void command_uci_new_game(){
             board.load_from_fen(START_POS);
             // TODO TT resize / clear
+        }
+
+        void init_tt(){
+            tt.resize(ttSize);
         }
     };
 }
