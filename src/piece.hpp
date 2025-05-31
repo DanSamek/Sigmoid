@@ -8,7 +8,7 @@
 
 
 namespace Sigmoid{
-    enum Piece {
+    enum Piece : int8_t {
         PAWN,
         KNIGHT,
         BISHOP,
