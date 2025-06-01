@@ -11,6 +11,7 @@
 #include "pairbitboard_tests.hpp"
 #include "board_tests.hpp"
 #include "movegen_tests.hpp"
+#include "zobrist_tests.hpp"
 
 // No lib used for tests.
 // Most of the tests are just sanity checks.
@@ -23,7 +24,11 @@ struct TestRunner{
         tests.push_back(std::make_unique<ColorTests>());
         tests.push_back(std::make_unique<PairBitboardTests>());
         tests.push_back(std::make_unique<BoardTests>());
+        tests.push_back(std::make_unique<ZobristTests>());
         tests.push_back(std::make_unique<MovegenTests>());
+
+        Zobrist::init();
+        Movegen::init();
 
         for (std::unique_ptr<Test>& test: tests){
             std::cout << "Running test " << test->test_name() << "." << std::endl;

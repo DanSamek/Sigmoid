@@ -13,7 +13,6 @@ struct MovegenTests : public Test{
         return "MovegenTests";
     }
 
-
     void verify_board(const Board& board, int depth) const{
         auto verify_bb = [&](uint64_t bb, Piece pc) ->void{
             int bit;
@@ -49,17 +48,16 @@ struct MovegenTests : public Test{
     }
 
     void run() const override{
-        Movegen::init();
         run_perft("8/1p4p1/8/q1PK1P1r/3p1k2/8/4P3/4Q3 b - - 0 1", 5, 6323457 );
         run_perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",5,4865609 );
         run_perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",6,119060324 );
+        //run_perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",7,3195901860 );
         run_perft("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0", 6,11030083 );
         run_perft("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0", 7,178633661 );
         run_perft("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10",5, 164075551 );
         run_perft("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", 5, 89941194 );
         run_perft("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0", 5, 193690690 );
         run_perft("8/8/8/1PpK4/5p2/4k3/8/8 b - - 0 24", 9, 133225511 );
-        run_perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 6, 119060324);
 
         run_perft("rnbqkbnr/ppppp1pp/8/8/5pP1/P1P5/1P1PPP1P/RNBQKBNR b KQkq g3 0 3", 1, 21 );
         run_perft("rnbqkbnr/ppppp1pp/8/8/5pP1/P1P5/1P1PPP1P/RNBQKBNR b KQkq g3 0 3", 3, 9365 );
@@ -162,13 +160,13 @@ struct MovegenTests : public Test{
 
     }
 
-    void run_perft(const std::string fen, int depth, int expected) const{
+    void run_perft(const std::string fen, int depth, uint64_t expected) const{
         Board board;
         std::cout << fen << std::endl;
         board.load_from_fen(fen);
         //board.print_state();
         auto start = std::chrono::high_resolution_clock::now();
-        long long result = move_recursion<false>(board, depth, depth);
+        uint64_t result = move_recursion<false>(board, depth, depth);
         if (result == expected){
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
@@ -183,7 +181,7 @@ struct MovegenTests : public Test{
     }
 
     template<bool debug>
-    long long move_recursion(Board& board, int depth, const int maxDepth) const{
+    uint64_t move_recursion(Board& board, int depth, const int maxDepth) const{
         if (depth == 0) return 1;
 
         [[maybe_unused]] std::string space;
@@ -197,7 +195,7 @@ struct MovegenTests : public Test{
 
         MoveList<false> move_list(&board);
 
-        long long result = 0;
+        uint64_t result = 0;
         Move move;
 
         while ((move = move_list.get()) != Move::none()){

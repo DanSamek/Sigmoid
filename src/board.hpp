@@ -15,6 +15,7 @@
 #include "color.hpp"
 #include "helper.hpp"
 #include "movegen.hpp"
+#include "zobrist.hpp"
 
 namespace Sigmoid {
     struct Board{
@@ -46,7 +47,13 @@ namespace Sigmoid {
 
             constexpr Color op = ~us;
             State new_state = currentState;
-            new_state.enPassantSquare = 0;
+            uint64_t prev_castling = new_state.castling;
+
+            if (currentState.enPassantSquare != NO_SQUARE)
+                new_state.zobristKey ^= Zobrist::epSquares[currentState.enPassantSquare];
+
+            new_state.zobristKey ^= Zobrist::sideToMove;
+            new_state.enPassantSquare = NO_SQUARE;
 
             const bool is_cap = is_capture(move);
             const Piece piece = at(move.from());
@@ -63,6 +70,8 @@ namespace Sigmoid {
                 assert(captured != NONE);
                 disable_cap_castling<us>(new_state, move);
                 new_state.bitboards[captured].pop_bit<op>(to);
+
+                new_state.zobristKey ^= Zobrist::pieceKeys[~us][captured][to];
             }
             else{
                 switch (special_type) {
@@ -71,10 +80,12 @@ namespace Sigmoid {
                         break;
                     case Move::CASTLE:
                         handle_castling<us>(new_state, from, to);
-
+                        break;
                     case Move::NONE:
-                        if (piece == Piece::PAWN && abs(from - to) > 8)
+                        if (piece == Piece::PAWN && abs(from - to) > 8) {
                             new_state.enPassantSquare = us == WHITE ? from - 8 : from + 8;
+                            new_state.zobristKey ^= Zobrist::epSquares[new_state.enPassantSquare];
+                        }
                         break;
                     default:
                         break;
@@ -89,7 +100,15 @@ namespace Sigmoid {
             new_state.pieceMap[from] = NONE;
             new_state.pieceMap[to] = to_piece;
 
+            new_state.zobristKey ^= Zobrist::pieceKeys[us][piece][from];
+            new_state.zobristKey ^= Zobrist::pieceKeys[us][promo_piece == NONE ? piece : promo_piece][to];
+
             disable_castling<us>(new_state, piece, move);
+
+            if (prev_castling != new_state.castling) {
+                new_state.zobristKey ^= Zobrist::castlingKeys[prev_castling];
+                new_state.zobristKey ^= Zobrist::castlingKeys[new_state.castling];
+            }
 
             uint64_t tmp = new_state.bitboards[KING].get<us>();
             int new_king_pos = bit_scan_forward_pop_lsb(tmp);
@@ -113,10 +132,11 @@ namespace Sigmoid {
             whoPlay = ~whoPlay;
 
             // TODO NNUE nnue.pop()
-         }
+        }
 
         void load_from_fen(std::string fen){
             currentState.reset();
+            ply = 0;
 
             size_t square = 0;
             size_t i = 0;
@@ -174,7 +194,54 @@ namespace Sigmoid {
             std::string substr = fen.substr(i);
             std::stringstream ss(substr);
             ss >> currentState.halfMove >> currentState.fullMove;
+
+            currentState.zobristKey = Zobrist::get_key(currentState, whoPlay);
         }
+
+        // Only for debug.
+        void print_state() const{
+            for (int row = 0; row < 8; row++){
+                for (int col = 0; col < 8; col++){
+                    int i = get_square(row, col);
+                    Piece piece = currentState.pieceMap[i];
+
+                    if (i == currentState.enPassantSquare){
+                        std::cout << "E";
+                        continue;
+                    }
+                    if (piece == NONE){
+                        std::cout << "-";
+                        continue;
+                    }
+                    bool upper = currentState.get_bit<WHITE>(i, piece);
+                    char c = upper ? piece_char<WHITE>(piece) : piece_char<BLACK>(piece);
+                    std::cout << c;
+                }
+                std::cout << std::endl;
+            }
+
+            std::cout << "HalfMove: " << currentState.halfMove << std::endl;
+            std::cout << "FullMove: " << currentState.fullMove << std::endl;
+            std::cout << "Castling: " << (int)currentState.castling << std::endl;
+            std::cout << std::endl;
+        }
+
+        // TODO -- will be used in datagen -- oneday.
+        std::string get_fen(){}
+
+        bool is_draw(){
+            int hitCount = 0;
+            for(int i = 0; i < ply; i++){
+                if(stateStack[i].zobristKey == currentState.zobristKey)
+                    hitCount++;
+                if(hitCount == 2)
+                    return true;
+            }
+            return false;
+
+        }
+
+    private:
 
         template<Color us>
         void disable_cap_castling(State& state, const Move& move){
@@ -204,6 +271,9 @@ namespace Sigmoid {
         void move_piece(State& state, int from, int to, Piece piece){
             state.bitboards[piece].pop_bit<us>(from);
             state.bitboards[piece].set_bit<us>(to);
+
+            state.zobristKey ^= Zobrist::pieceKeys[us][piece][from];
+            state.zobristKey ^= Zobrist::pieceKeys[us][piece][to];
         }
 
         template<Color us>
@@ -239,34 +309,8 @@ namespace Sigmoid {
             const int enemy_pawn_square = us == WHITE ? to + 8 : to - 8;
             state.bitboards[PAWN].pop_bit<~us>(enemy_pawn_square);
             state.pieceMap[enemy_pawn_square] = NONE;
-        }
 
-        // Only for debug.
-        void print_state() const{
-            for (int row = 0; row < 8; row++){
-                for (int col = 0; col < 8; col++){
-                    int i = get_square(row, col);
-                    Piece piece = currentState.pieceMap[i];
-
-                    if (i == currentState.enPassantSquare){
-                        std::cout << "E";
-                        continue;
-                    }
-                    if (piece == NONE){
-                        std::cout << "-";
-                        continue;
-                    }
-                    bool upper = currentState.get_bit<WHITE>(i, piece);
-                    char c = upper ? piece_char<WHITE>(piece) : piece_char<BLACK>(piece);
-                    std::cout << c;
-                }
-                std::cout << std::endl;
-            }
-
-            std::cout << "HalfMove: " << currentState.halfMove << std::endl;
-            std::cout << "FullMove: " << currentState.fullMove << std::endl;
-            std::cout << "Castling: " << (int)currentState.castling << std::endl;
-            std::cout << std::endl;
+            state.zobristKey ^= Zobrist::pieceKeys[~us][PAWN][enemy_pawn_square];
         }
 
         uint64_t get_occupancy(const State& state) const{
@@ -304,9 +348,6 @@ namespace Sigmoid {
             // TODO pins.
             return false;
         }
-
-        // TODO -- will be used in datagen -- oneday.
-        std::string get_fen(){}
     };
 }
 

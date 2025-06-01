@@ -7,6 +7,7 @@ add_executable(Sigmoid src/main.cpp)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(Sigmoid PRIVATE -O3 -funroll-loops)
+    target_compile_definitions(Sigmoid PRIVATE $<$<CONFIG:Release>:UNDEBUG>)
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
