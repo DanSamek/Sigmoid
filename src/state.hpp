@@ -15,7 +15,7 @@ namespace Sigmoid{
         std::array<Piece, 64> pieceMap;
         uint8_t enPassantSquare = 0;
         uint64_t zobristKey = 0ULL;
-        uint16_t halfMove = 0, fullMove = 0;
+        uint16_t halfMove = 0, fullMove = 1;
 
         uint8_t castling = 0;
 

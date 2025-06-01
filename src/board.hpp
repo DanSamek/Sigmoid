@@ -39,7 +39,6 @@ namespace Sigmoid {
         }
 
         // TODO nnue.push().
-        // TODO update zobrist hash
         // TODO NNUE updates.
         template<Color us>
         bool make_move(const Move& move) {
@@ -54,6 +53,8 @@ namespace Sigmoid {
 
             new_state.zobristKey ^= Zobrist::sideToMove;
             new_state.enPassantSquare = NO_SQUARE;
+
+            new_state.fullMove += us == BLACK;
 
             const bool is_cap = is_capture(move);
             const Piece piece = at(move.from());
@@ -72,8 +73,10 @@ namespace Sigmoid {
                 new_state.bitboards[captured].pop_bit<op>(to);
 
                 new_state.zobristKey ^= Zobrist::pieceKeys[~us][captured][to];
+                new_state.halfMove = 0;
             }
             else{
+                new_state.halfMove = piece == PAWN ? 0 : new_state.halfMove + 1;
                 switch (special_type) {
                     case Move::EN_PASSANT:
                         handle_ep<us>(new_state, to);
@@ -229,19 +232,42 @@ namespace Sigmoid {
         // TODO -- will be used in datagen -- oneday.
         std::string get_fen(){}
 
-        bool is_draw(){
-            int hitCount = 0;
-            for(int i = 0; i < ply; i++){
-                if(stateStack[i].zobristKey == currentState.zobristKey)
-                    hitCount++;
-                if(hitCount == 2)
+        bool is_draw() const{
+            if (currentState.halfMove >= 100)
+                return true;
+
+            if (is_insufficient_material<WHITE>() && is_insufficient_material<BLACK>())
+                return false;
+
+            int hit_count = 0;
+            for (int i = 0; i < ply; i++){
+                if (stateStack[i].zobristKey == currentState.zobristKey)
+                    hit_count++;
+                if (hit_count == 2)
                     return true;
             }
             return false;
-
         }
 
     private:
+
+        template<Color us>
+        bool is_insufficient_material() const{
+            if (currentState.bitboards[QUEEN].get<us>()
+                || currentState.bitboards[ROOK].get<us>()
+                || currentState.bitboards[PAWN].get<us>())
+                return false;
+
+            uint64_t bb = currentState.bitboards[BISHOP].get<us>();
+            const int bishop_cnt = count_bits(bb);
+            if (bishop_cnt >= 2) return false;
+
+            bb = currentState.bitboards[KNIGHT].get<us>();
+            const int knight_cnt = count_bits(bb);
+            if (knight_cnt >= 2) return false;
+
+            return !(knight_cnt == 1 && bishop_cnt == 1);
+        }
 
         template<Color us>
         void disable_cap_castling(State& state, const Move& move){
@@ -313,7 +339,7 @@ namespace Sigmoid {
             state.zobristKey ^= Zobrist::pieceKeys[~us][PAWN][enemy_pawn_square];
         }
 
-        uint64_t get_occupancy(const State& state) const{
+        static uint64_t get_occupancy(const State& state) {
             uint64_t occ = 0ULL;
             for (const PairBitboard& pb : state.bitboards){
                 occ |= pb.get<WHITE>() | pb.get<BLACK>();
