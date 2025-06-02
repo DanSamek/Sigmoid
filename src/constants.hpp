@@ -2,6 +2,8 @@
 #define SIGMOID_CONSTANTS_HPP
 
 namespace Sigmoid {
+    const std::string VERSION = "0.0.1";
+
     constexpr int MAX_PLY = 128;
     constexpr int MAX_PLY_P1 = MAX_PLY + 1;
     constexpr int MAX_POSSIBLE_MOVES = 218;
@@ -13,6 +15,7 @@ namespace Sigmoid {
 
     constexpr uint8_t NO_SQUARE = -1;
 
-    const std::string VERSION = "0.0.1";
+    constexpr int16_t MAX_VALUE = 32000;
+    constexpr int16_t MIN_VALUE = -32000;
 }
 #endif //SIGMOID_CONSTANTS_HPP

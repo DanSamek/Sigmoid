@@ -10,6 +10,10 @@ int main(int argc, char* args[]) {
     std::string command(args[1]);
     if (command == "test")
         TestRunner::run_all();
+    if (command == "bench"){
+        // TODO bench
+    }
+
     // TODO datagen
     return 0;
 }

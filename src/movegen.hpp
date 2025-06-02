@@ -18,6 +18,58 @@ namespace Sigmoid{
             else generate_moves_<captures, BLACK>(state, moves, size);
         }
 
+
+
+        static inline bool ready = false;
+        static void init(){
+            if (ready) return;
+            Magics::init();
+            generate_move_bitboards<KNIGHT>();
+            generate_move_bitboards<KING>();
+
+            generate_pawn_bitboards<WHITE>();
+            generate_pawn_bitboards<BLACK>();
+            ready = true;
+        }
+
+        template<Color us>
+        inline static bool is_square_attacked(const State& state, int square, uint64_t all = 0xffffffffffffffff){
+            constexpr Color op = ~us;
+            if (all == 0xffffffffffffffff)
+            {
+                all = 0ULL;
+                for (const PairBitboard& pb : state.bitboards){
+                    all |= pb.get<us>() | pb.get<op>();
+                }
+            }
+
+            if (Magics::get_rook_moves(all, square) & (state.bitboards[ROOK].get<op>() | state.bitboards[QUEEN].get<op>()))
+                return true;
+
+            if (Magics::get_bishop_moves(all, square) & (state.bitboards[BISHOP].get<op>() | state.bitboards[QUEEN].get<op>()))
+                return true;
+
+            if(knightMoves[square] & state.bitboards[KNIGHT].get<op>())
+                return true;
+
+            if(pawnAttackMoves[us][square] & state.bitboards[PAWN].get<op>())
+                return true;
+
+            if(kingMoves[square] & state.bitboards[KING].get<op>())
+                return true;
+
+            return false;
+        }
+
+    private:
+
+        template<bool captures>
+        inline static void filter_captures(uint64_t& moves, const uint64_t& enemy_bits){
+            if constexpr (captures){
+                moves &= enemy_bits;
+            }
+        }
+
         template<bool captures, Color us>
         static void generate_moves_(const State& state, std::array<Move, MAX_POSSIBLE_MOVES>& movesRef, int& size){
 
@@ -44,12 +96,6 @@ namespace Sigmoid{
                 }
             };
 
-            auto filter_captures = [&](uint64_t& moves){
-                if constexpr (captures){
-                    moves &= enemy_bits;
-                }
-            };
-
             int pos;
             uint64_t moves;
             // Rook
@@ -57,7 +103,7 @@ namespace Sigmoid{
             while(bb){
                 pos = bit_scan_forward_pop_lsb(bb);
                 moves = Magics::get_rook_moves(merged_bits, pos);
-                filter_captures(moves);
+                filter_captures<captures>(moves, enemy_bits);
                 bitboard_to_moves(pos, moves);
             }
 
@@ -66,7 +112,7 @@ namespace Sigmoid{
             while(bb){
                 pos = bit_scan_forward_pop_lsb(bb);
                 moves = Magics::get_bishop_moves(merged_bits, pos);
-                filter_captures(moves);
+                filter_captures<captures>(moves, enemy_bits);
                 bitboard_to_moves(pos, moves);
             }
 
@@ -75,7 +121,7 @@ namespace Sigmoid{
             while(bb){
                 pos = bit_scan_forward_pop_lsb(bb);
                 moves = Magics::get_bishop_moves(merged_bits, pos) | Magics::get_rook_moves(merged_bits, pos);
-                filter_captures(moves);
+                filter_captures<captures>(moves, enemy_bits);
                 bitboard_to_moves(pos, moves);
             }
 
@@ -84,7 +130,7 @@ namespace Sigmoid{
             while(bb){
                 pos = bit_scan_forward_pop_lsb(bb);
                 moves = knightMoves[pos];
-                filter_captures(moves);
+                filter_captures<captures>(moves, enemy_bits);
                 bitboard_to_moves(pos, moves);
             }
 
@@ -152,82 +198,6 @@ namespace Sigmoid{
             }
         }
 
-        static inline bool ready = false;
-        static void init(){
-            if (ready) return;
-            Magics::init();
-            generate_move_bitboards<KNIGHT>();
-            generate_move_bitboards<KING>();
-
-            generate_pawn_bitboards<WHITE>();
-            generate_pawn_bitboards<BLACK>();
-            ready = true;
-        }
-
-        template<Color us>
-        inline static bool is_square_attacked(const State& state, int square, uint64_t all = -1){
-            constexpr Color op = ~us;
-            if (all == -1)
-            {
-                all = 0ULL;
-                for (const PairBitboard& pb : state.bitboards){
-                    all |= pb.get<us>() | pb.get<op>();
-                }
-            }
-
-            if (Magics::get_rook_moves(all, square) & (state.bitboards[ROOK].get<op>() | state.bitboards[QUEEN].get<op>()))
-                return true;
-
-            if (Magics::get_bishop_moves(all, square) & (state.bitboards[BISHOP].get<op>() | state.bitboards[QUEEN].get<op>()))
-                return true;
-
-            if(knightMoves[square] & state.bitboards[KNIGHT].get<op>())
-                return true;
-
-            if(pawnAttackMoves[us][square] & state.bitboards[PAWN].get<op>())
-                return true;
-
-            if(kingMoves[square] & state.bitboards[KING].get<op>())
-                return true;
-
-            return false;
-        }
-
-        // Will be removed, when movegen will pass perft tests.
-        template<Piece piece>
-        void print_bitboards(){
-            static_assert(piece == KING || piece == KNIGHT || piece == PAWN);
-            if constexpr (piece == PAWN){
-                for (int square = 0; square < 64; square++){
-                    std::cout << square << std::endl;
-                    std::cout << "QUIET" << std::endl;
-                    uint64_t bb_w_q = pawnQuietMoves[WHITE][square];
-                    print_bitboard(bb_w_q);
-                    std::cout << std::endl;
-                    uint64_t bb_b_q = pawnQuietMoves[BLACK][square];
-                    print_bitboard(bb_b_q);
-                    std::cout << std::endl;
-
-                    std::cout << "ATTACK" << std::endl;
-                    bb_w_q = pawnAttackMoves[WHITE][square];
-                    print_bitboard(bb_w_q);
-                    std::cout << std::endl;
-                    bb_b_q = pawnAttackMoves[BLACK][square];
-                    print_bitboard(bb_b_q);
-                    std::cout << std::endl;
-                    std::cout << std::endl;
-                }
-            }
-            else{
-                auto& bitboards = piece == KING ? kingMoves : knightMoves;
-                for (int square = 0; square < 64; square++){
-                    uint64_t bb = bitboards[square];
-                    std::cout << square << std::endl;
-                    print_bitboard(bb);
-                    std::cout << std::endl;
-                }
-            }
-        }
 
     private:
         static inline constexpr int Q_CASTLE = 0;

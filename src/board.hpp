@@ -42,7 +42,8 @@ namespace Sigmoid {
         // TODO NNUE updates.
         template<Color us>
         bool make_move(const Move& move) {
-            if (is_illegal<us>(currentState, move)) return false;
+            if (is_illegal<us>(currentState, move))
+                return false;
 
             constexpr Color op = ~us;
             State new_state = currentState;
@@ -356,12 +357,6 @@ namespace Sigmoid {
             if (move.special_type() == Move::CASTLE){
                 const uint64_t occ = get_occupancy(state);
                 const bool kingSide = move.from() < move.to();
-
-                if (kingSide && !state.is_castling_set<us, false>())
-                    return false;
-
-                if (!kingSide && !state.is_castling_set<us, true>())
-                    return false;
 
                 bool result = Movegen::is_square_attacked<us>(state, move.from(), occ);
                 result |= Movegen::is_square_attacked<us>(state, kingSide ? move.from() + 1 : move.from() - 1, occ);

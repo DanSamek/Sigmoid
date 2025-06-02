@@ -19,6 +19,7 @@ namespace Sigmoid{
         Board board;
         Engine engine;
         TranspositionTable tt;
+        int threadCnt = 1;
 
         Uci() {
             tt = TranspositionTable();
@@ -56,6 +57,9 @@ namespace Sigmoid{
                 ttSize = std::stoi(value);
                 init_tt();
             }
+            if (type == "Threads") {
+                threadCnt = std::stoi(value);
+            }
         }
 
         // go wtime <> btime <> winc <> binc <>
@@ -74,6 +78,8 @@ namespace Sigmoid{
             }
 
             options.board = board;
+            options.tt = &tt;
+            options.threadCnt = threadCnt;
             engine.start_searching(options);
         }
 
@@ -122,8 +128,8 @@ namespace Sigmoid{
             std::cout << "id name Sigmoid " << VERSION << std::endl;
             std::cout << "id author Daniel Samek" << std::endl;
 
-            std::cout << "option name Hash type spin default "<< ttSize << " min 1 max 128000" << std::endl;
-            // all options. TODO
+            std::cout << "option name Hash type spin default " << ttSize << " min 1 max 128000" << std::endl;
+            std::cout << "option name Threads type spin default 1 min 1 max 1024" << std::endl;
         }
 
         void command_is_ready(){
