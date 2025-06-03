@@ -2,7 +2,6 @@
 #define SIGMOID_ENGINE_HPP
 
 #include <thread>
-#include <future>
 
 #include "move.hpp"
 #include "board.hpp"
@@ -13,48 +12,41 @@ namespace Sigmoid {
 
     struct Engine {
         struct Options {
-            int depth;
+            int depth = MAX_PLY - 1;
             int wTime, bTime;
             int wInc, bInc;
 
             int threadCnt;
             TranspositionTable* tt;
             Board board;
+
+            // Datagen stuff
+            int softNodes = 5000;
+            bool datagen = false;
+
+            int16_t score; // Out value.
         };
 
-        void start_searching(const Options& options){
-            Board cpy = options.board;
+        void start_searching(Options& options){
             std::vector<std::thread> search_threads;
-            std::vector<std::future<SearchResult>> search_futures;
-            std::vector<SearchResult> search_results;
 
-            for (int i = 0; i < options.threadCnt; ++i){
-                Thread th(i, cpy, options.tt);
-                search_futures.emplace_back(std::async(std::launch::async, [th]() mutable {
-                    return th.iterative_deepening();
-                }));
+            ThreadHelper threadHelper(options.threadCnt, options.datagen);
+
+            for (int i = 0; i < options.threadCnt; ++i) {
+                Board board_copy = options.board;
+
+                search_threads.emplace_back([board_copy, &options, &threadHelper] {
+                    Thread* th = new Thread(board_copy, options.tt, &threadHelper, options.depth);
+                    th->iterative_deepening();
+                    delete th;
+                });
             }
 
             for (std::thread& search_thread : search_threads)
                 search_thread.join();
 
-            for (auto& future : search_futures)
-                search_results.push_back(future.get());
-
-            // TODO find best.
-            /*
-                MoveList<false> ml(&options.board);
-                Move move;
-                while ((move = ml.get()) != Move::none()){
-                    if (!cpy.make_move(move))
-                        continue;
-                    break;
-                }
-                std::cout << "bestmove " << move.to_uci() << std::endl;
-            */
+            options.score = threadHelper.bestResult.score;
         }
-
-        void stop_searching(){ }
     };
 }
 

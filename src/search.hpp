@@ -5,20 +5,25 @@
 
 namespace Sigmoid {
     enum NodeType{
-        Root,
+        ROOT,
         PV,
-        NonPv
+        NONPV
     };
 
     struct SearchResult {
-        Move bestMove;
-        uint16_t score;
-        // PV TODO.
+        Move bestMove = Move::none();
+        uint16_t score = MIN_VALUE;
+
+        std::array<std::array<Move, MAX_PLY>, MAX_PLY> pvTable;
+        std::array<uint8_t, MAX_PLY> pvLength;
+
+        uint64_t nodesVisited;
     };
 
-    struct StackItem{
-        Move currentMove;
-        int8_t ply;
+    struct StackItem {
+        Move currentMove = Move::none();
+        Move excludedMove = Move::none();
+        int8_t ply = 0;
     };
 }
 

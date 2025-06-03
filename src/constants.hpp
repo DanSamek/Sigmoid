@@ -4,8 +4,8 @@
 namespace Sigmoid {
     const std::string VERSION = "0.0.1";
 
-    constexpr int MAX_PLY = 128;
-    constexpr int MAX_PLY_P1 = MAX_PLY + 1;
+    const int MAX_PLY = 128;
+    const int MAX_PLY_P1 = MAX_PLY + 1;
     constexpr int MAX_POSSIBLE_MOVES = 218;
 
     constexpr int STACK_SIZE = 2048;
@@ -17,5 +17,7 @@ namespace Sigmoid {
 
     constexpr int16_t MAX_VALUE = 32000;
     constexpr int16_t MIN_VALUE = -32000;
+    constexpr int16_t CHECKMATE = MAX_VALUE - (MAX_PLY + 1);
+    constexpr int16_t DRAW = 0;
 }
 #endif //SIGMOID_CONSTANTS_HPP

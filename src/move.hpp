@@ -28,7 +28,9 @@ namespace Sigmoid{
 
         uint16_t data = 0;
 
-        Move() = default;
+        auto operator<=>(const Move&) const = default;
+
+        Move() {}
 
         Move(int from, int to, SpecialType type = NONE){
             set_data(from, to, type);

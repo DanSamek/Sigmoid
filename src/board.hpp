@@ -16,6 +16,7 @@
 #include "helper.hpp"
 #include "movegen.hpp"
 #include "zobrist.hpp"
+#include "./nnue/nnue.hpp"
 
 namespace Sigmoid {
     struct Board{
@@ -23,6 +24,7 @@ namespace Sigmoid {
         int ply = 0;
         Color whoPlay;
         State currentState;
+        NNUE nnue;
 
         Board(): ply(0) { }
 
@@ -38,8 +40,6 @@ namespace Sigmoid {
             return whoPlay == WHITE ? make_move<WHITE>(move) : make_move<BLACK>(move);
         }
 
-        // TODO nnue.push().
-        // TODO NNUE updates.
         template<Color us>
         bool make_move(const Move& move) {
             if (is_illegal<us>(currentState, move))
@@ -64,11 +64,12 @@ namespace Sigmoid {
             const Piece promo_piece = move.promo_piece();
             const Move::SpecialType special_type = move.special_type();
 
+            Piece captured = NONE;
             Piece to_piece = piece;
 
             if (is_cap)
             {
-                Piece captured = new_state.pieceMap[to];
+                captured = new_state.pieceMap[to];
                 assert(captured != NONE);
                 disable_cap_castling<us>(new_state, move);
                 new_state.bitboards[captured].pop_bit<op>(to);
@@ -119,6 +120,33 @@ namespace Sigmoid {
             if (Movegen::is_square_attacked<us>(new_state, new_king_pos))
                 return false;
 
+            nnue.push();
+
+            if (is_cap)
+            {
+                assert(captured != NONE);
+                nnue.sub(~us, captured, to);
+            }
+            else{
+                switch (special_type) {
+                    case Move::EN_PASSANT:
+                        handle_ep_nnue<us>(to);
+                        break;
+                    case Move::CASTLE:
+                        handle_castling_nnue<us>(from, to);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            if (promo_piece != NONE){
+                nnue.sub(us, piece, from);
+                nnue.add(us, to_piece, to);
+            }
+            else{
+                nnue.move_piece(us, piece, from, to);
+            }
+
             whoPlay = ~whoPlay;
             stateStack[ply] = currentState;
             currentState = new_state;
@@ -131,14 +159,31 @@ namespace Sigmoid {
             assert(ply >= 1);
             ply--;
 
-            // Stack pop
             currentState = stateStack[ply];
             whoPlay = ~whoPlay;
 
-            // TODO NNUE nnue.pop()
+            nnue.pop();
+        }
+
+        bool in_check() {
+            uint64_t king_bb;
+
+            king_bb = whoPlay == BLACK ?
+                    currentState.bitboards[KING].get<BLACK>() : currentState.bitboards[KING].get<WHITE>();
+
+            int king_square = bit_scan_forward_pop_lsb(king_bb);
+            if (whoPlay == BLACK)
+                Movegen::is_square_attacked<BLACK>(currentState, king_square);
+            else
+                Movegen::is_square_attacked<WHITE>(currentState, king_square);
+        }
+
+        int16_t eval(){
+            return whoPlay == WHITE ? nnue.eval<WHITE>() : nnue.eval<BLACK>();
         }
 
         void load_from_fen(std::string fen){
+            nnue.reset();
             currentState.reset();
             ply = 0;
 
@@ -159,12 +204,12 @@ namespace Sigmoid {
                     break;
 
                 Piece piece = LETTER_PIECE_MAP.at(tolower(c));
-
                 if (isupper(c))
                     currentState.set_bit<WHITE>(square, piece);
                 else
                     currentState.set_bit<BLACK>(square, piece);
 
+                nnue.add(isupper(c) ? WHITE : BLACK, piece, square);
                 currentState.pieceMap[square] = piece;
                 square++;
             }
@@ -238,7 +283,7 @@ namespace Sigmoid {
                 return true;
 
             if (is_insufficient_material<WHITE>() && is_insufficient_material<BLACK>())
-                return false;
+                return true;
 
             int hit_count = 0;
             for (int i = 0; i < ply; i++){
@@ -334,6 +379,7 @@ namespace Sigmoid {
         template<Color us>
         void handle_ep(State& state, int to){
             const int enemy_pawn_square = us == WHITE ? to + 8 : to - 8;
+
             state.bitboards[PAWN].pop_bit<~us>(enemy_pawn_square);
             state.pieceMap[enemy_pawn_square] = NONE;
 
@@ -368,6 +414,27 @@ namespace Sigmoid {
 
             // TODO pins.
             return false;
+        }
+
+
+        template<Color us>
+        void move_piece_nnue(int from, int to, Piece piece){
+            nnue.move_piece(us, piece, from, to);
+        }
+
+        template<Color us>
+        void handle_castling_nnue(int from, int to){
+            const bool king_side = from < to;
+            if (king_side)
+                move_piece_nnue<us>(to + 1, to - 1, ROOK);
+            else
+                move_piece_nnue<us>(to - 2, to + 1, ROOK);
+        }
+
+        template<Color us>
+        void handle_ep_nnue(int to){
+            const int enemy_pawn_square = us == WHITE ? to + 8 : to - 8;
+            nnue.sub(~us, PAWN, enemy_pawn_square);
         }
     };
 }

@@ -43,8 +43,8 @@ namespace Sigmoid{
                     command_go(line);
                 if (line.find("setoption") != std::string::npos)
                     command_set_option(line);
-
-                // TODO handle uci options.
+                if (line.find("eval") != std::string::npos)
+                    std::cout << board.eval() << std::endl;
             }
         }
 
@@ -133,15 +133,14 @@ namespace Sigmoid{
         }
 
         void command_is_ready(){
-            Movegen::init(); // -> magics init.
-            // TODO TT resize / clear
-
+            Zobrist::init();
+            Movegen::init();
             std::cout << "readyok" << std::endl;
         }
 
         void command_uci_new_game(){
             board.load_from_fen(START_POS);
-            // TODO TT resize / clear
+            tt.resize(ttSize);
         }
 
         void init_tt(){
