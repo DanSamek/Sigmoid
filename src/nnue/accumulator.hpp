@@ -12,7 +12,7 @@ namespace Sigmoid{
     struct Accumulator{
         std::array<std::array<int16_t, HIDDEN_LAYER_SIZE>, 2> data;
 
-        Accumulator(){}
+        Accumulator() = default;
 
         template<Color color>
         void add(const std::array<int16_t, HIDDEN_LAYER_SIZE>& weights) {

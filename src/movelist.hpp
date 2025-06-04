@@ -26,10 +26,8 @@ namespace Sigmoid {
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
         int size = 0;
 
-
         bool generated = false;
         int iterIndex = 0;
-
     };
 }
 

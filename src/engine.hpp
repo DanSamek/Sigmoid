@@ -6,7 +6,7 @@
 #include "move.hpp"
 #include "board.hpp"
 #include "tt.hpp"
-#include "thread.hpp"
+#include "worker.hpp"
 
 namespace Sigmoid {
 
@@ -28,24 +28,19 @@ namespace Sigmoid {
         };
 
         void start_searching(Options& options){
+            WorkerHelper worker_helper(options.threadCnt, options.datagen);
             std::vector<std::thread> search_threads;
-
-            ThreadHelper threadHelper(options.threadCnt, options.datagen);
+            std::vector<Worker> workers;
 
             for (int i = 0; i < options.threadCnt; ++i) {
-                Board board_copy = options.board;
-
-                search_threads.emplace_back([board_copy, &options, &threadHelper] {
-                    Thread* th = new Thread(board_copy, options.tt, &threadHelper, options.depth);
-                    th->iterative_deepening();
-                    delete th;
-                });
+                workers.emplace_back(options.board, options.tt, &worker_helper, options.depth);
+                search_threads.emplace_back(&Worker::iterative_deepening, &workers[i]);
             }
 
             for (std::thread& search_thread : search_threads)
                 search_thread.join();
 
-            options.score = threadHelper.bestResult.score;
+            options.score = worker_helper.bestResult.score;
         }
     };
 }

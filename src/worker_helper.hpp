@@ -1,22 +1,23 @@
-#ifndef SIGMOID_THREAD_HELPER_HPP
-#define SIGMOID_THREAD_HELPER_HPP
+#ifndef SIGMOID_WORKER_HELPER_HPP
+#define SIGMOID_WORKER_HELPER_HPP
 
 #include <mutex>
 #include <vector>
+#include <iostream>
 
 #include "search.hpp"
 #include "constants.hpp"
 
 namespace Sigmoid{
 
-    struct ThreadHelper{
+    struct WorkerHelper{
         const size_t threadCnt;
         std::map<int, std::vector<SearchResult>> depthSearchDone;
         std::mutex resultLock;
         SearchResult bestResult;
         bool datagen;
 
-        ThreadHelper(int threadCnt, bool datagen) : threadCnt(threadCnt), datagen(datagen) { }
+        WorkerHelper(int threadCnt, bool datagen) : threadCnt(threadCnt), datagen(datagen) { }
 
         void enter_search_result(const int searchDepth, const SearchResult& searchResult){
             std::unique_lock lock(resultLock);
@@ -61,4 +62,4 @@ namespace Sigmoid{
     };
 }
 
-#endif //SIGMOID_THREAD_HELPER_HPP
+#endif //SIGMOID_WORKER_HELPER_HPP

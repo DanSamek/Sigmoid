@@ -38,22 +38,22 @@ namespace Sigmoid{
 
         bool operator==(const Move& move) const = default;
 
-        uint8_t from() const{
+        [[nodiscard]] uint8_t from() const{
             uint8_t result = data & SQ_MASK;
             return result;
         }
 
-        uint8_t to() const{
+        [[nodiscard]] uint8_t to() const{
             uint8_t result = (data >> 6) & SQ_MASK;
             return result;
         }
 
-        SpecialType special_type() const{
+        [[nodiscard]] SpecialType special_type() const{
             SpecialType result = (SpecialType)(data >> 12);
             return result;
         }
 
-        Piece promo_piece() const{
+        [[nodiscard]] Piece promo_piece() const{
             SpecialType tmp =  special_type();
             return tmp < 3 ? Piece::NONE : Piece(tmp - 2);
         }
@@ -66,10 +66,10 @@ namespace Sigmoid{
         }
 
         inline static Move none(){
-            return Move(0,0);
+            return {0,0};
         }
 
-        std::string to_uci(){
+        [[nodiscard]] std::string to_uci() const{
             std::ostringstream oss;
             auto sq_to_uci = [](uint8_t square)->std::string{
                 int file = square / 8;

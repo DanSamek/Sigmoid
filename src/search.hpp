@@ -12,12 +12,12 @@ namespace Sigmoid {
 
     struct SearchResult {
         Move bestMove = Move::none();
-        uint16_t score = MIN_VALUE;
+        int16_t score = MIN_VALUE;
 
         std::array<std::array<Move, MAX_PLY>, MAX_PLY> pvTable;
         std::array<uint8_t, MAX_PLY> pvLength;
 
-        uint64_t nodesVisited;
+        uint64_t nodesVisited = 0ULL;
     };
 
     struct StackItem {

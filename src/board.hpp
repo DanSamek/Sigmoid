@@ -120,6 +120,7 @@ namespace Sigmoid {
             if (Movegen::is_square_attacked<us>(new_state, new_king_pos))
                 return false;
 
+
             nnue.push();
 
             if (is_cap)
@@ -158,7 +159,6 @@ namespace Sigmoid {
         void undo_move(){
             assert(ply >= 1);
             ply--;
-
             currentState = stateStack[ply];
             whoPlay = ~whoPlay;
 
@@ -167,18 +167,16 @@ namespace Sigmoid {
 
         bool in_check() {
             uint64_t king_bb;
-
             king_bb = whoPlay == BLACK ?
                     currentState.bitboards[KING].get<BLACK>() : currentState.bitboards[KING].get<WHITE>();
 
             int king_square = bit_scan_forward_pop_lsb(king_bb);
-            if (whoPlay == BLACK)
-                Movegen::is_square_attacked<BLACK>(currentState, king_square);
-            else
-                Movegen::is_square_attacked<WHITE>(currentState, king_square);
+            return whoPlay == BLACK ?
+                Movegen::is_square_attacked<BLACK>(currentState, king_square)
+                        : Movegen::is_square_attacked<WHITE>(currentState, king_square);
         }
 
-        int16_t eval(){
+        int eval() {
             return whoPlay == WHITE ? nnue.eval<WHITE>() : nnue.eval<BLACK>();
         }
 
@@ -248,7 +246,7 @@ namespace Sigmoid {
         }
 
         // Only for debug.
-        void print_state() const{
+        void print_state() const {
             for (int row = 0; row < 8; row++){
                 for (int col = 0; col < 8; col++){
                     int i = get_square(row, col);
@@ -276,9 +274,11 @@ namespace Sigmoid {
         }
 
         // TODO -- will be used in datagen -- oneday.
-        std::string get_fen(){}
+        std::string get_fen(){
+            return "";
+        }
 
-        bool is_draw() const{
+        [[nodiscard]] bool is_draw() const{
             if (currentState.halfMove >= 100)
                 return true;
 
@@ -298,7 +298,7 @@ namespace Sigmoid {
     private:
 
         template<Color us>
-        bool is_insufficient_material() const{
+        [[nodiscard]] bool is_insufficient_material() const{
             if (currentState.bitboards[QUEEN].get<us>()
                 || currentState.bitboards[ROOK].get<us>()
                 || currentState.bitboards[PAWN].get<us>())
@@ -386,7 +386,7 @@ namespace Sigmoid {
             state.zobristKey ^= Zobrist::pieceKeys[~us][PAWN][enemy_pawn_square];
         }
 
-        static uint64_t get_occupancy(const State& state) {
+        inline static uint64_t get_occupancy(const State& state) {
             uint64_t occ = 0ULL;
             for (const PairBitboard& pb : state.bitboards){
                 occ |= pb.get<WHITE>() | pb.get<BLACK>();
@@ -394,10 +394,7 @@ namespace Sigmoid {
             return occ;
         }
 
-        // TODO - simple check for some types of the moves.
-        //      - For example pins -- can be detected with ray
-        //      - King moves to enemy attacks -> illegal - DONE
-        //      - King castling -> are squares attacked [?] - DONE
+        // TODO pins
         template<Color us>
         bool is_illegal(const State& state, const Move& move){
             if (move.special_type() == Move::CASTLE){
@@ -412,7 +409,6 @@ namespace Sigmoid {
             else if (state.pieceMap[move.from()] == KING)
                 return Movegen::is_square_attacked<us>(state, move.to());
 
-            // TODO pins.
             return false;
         }
 

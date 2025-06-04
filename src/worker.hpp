@@ -1,21 +1,25 @@
-#ifndef SIGMOID_THREAD_HPP
-#define SIGMOID_THREAD_HPP
+#ifndef SIGMOID_WORKER_HPP
+#define SIGMOID_WORKER_HPP
+
+#include <utility>
 
 #include "board.hpp"
 #include "search.hpp"
-#include "thread_helper.hpp"
+#include "worker_helper.hpp"
+#include "tt.hpp"
+#include "movelist.hpp"
 
 namespace Sigmoid {
 
-    struct Thread {
+    struct Worker {
         Board board;
         TranspositionTable* tt;
-        ThreadHelper* threadHelper;
+        WorkerHelper* workerHelper;
         SearchResult result;
         int searchDepth;
 
-        Thread(Board board, TranspositionTable* tt, ThreadHelper* th, int searchDepth) :
-            board(board), tt(tt), threadHelper(th), searchDepth(searchDepth) {}
+        Worker(Board board, TranspositionTable* tt, WorkerHelper* wh, int searchDepth) :
+            board(std::move(board)), tt(tt), workerHelper(wh), searchDepth(searchDepth) {}
 
         bool time_out() {
             // TODO just check time.
@@ -23,21 +27,19 @@ namespace Sigmoid {
         }
 
         void iterative_deepening() {
-            std::cout << sizeof(Thread) << std::endl;
             StackItem stack[MAX_PLY + 1];
             StackItem* root = stack + 1;
 
-            /*
             for (int i = 0; i < MAX_PLY - 1; i++){
                 (root + i)->ply = i;
                 (root + i)->currentMove = Move::none();
                 (root + i)->excludedMove = Move::none();
-            }*/
+            }
 
             for (int depth = 1; depth <= searchDepth; depth++){
                 int16_t eval = negamax<ROOT>(depth, MIN_VALUE, MAX_VALUE, root);
                 result.score = eval;
-                threadHelper->enter_search_result(depth, result);
+                workerHelper->enter_search_result(depth, result);
             }
         }
 
@@ -70,7 +72,7 @@ namespace Sigmoid {
 
                 if (value > best_value) {
                     best_value = value;
-                    if (root_node) {
+                    if constexpr (root_node) {
                         result.bestMove = move;
                     }
 
@@ -83,9 +85,9 @@ namespace Sigmoid {
             }
 
             // TODO TT store.
-
-            if (move_count == 0 && in_check)
+            if (move_count == 0 && in_check){
                 return -CHECKMATE + stack->ply;
+            }
             else if (move_count == 0)
                 return DRAW;
 
@@ -101,4 +103,4 @@ namespace Sigmoid {
     };
 }
 
-#endif //SIGMOID_THREAD_HPP
+#endif //SIGMOID_WORKER_HPP

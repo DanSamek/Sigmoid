@@ -43,8 +43,10 @@ namespace Sigmoid{
                     command_go(line);
                 if (line.find("setoption") != std::string::npos)
                     command_set_option(line);
-                if (line.find("eval") != std::string::npos)
+                if (line.find("eval") != std::string::npos){
+                    board.print_state();
                     std::cout << board.eval() << std::endl;
+                }
             }
         }
 

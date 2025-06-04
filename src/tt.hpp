@@ -15,10 +15,10 @@ namespace Sigmoid {
 
     struct Entry {
         uint64_t key;
-        Move move;
+        Move move = Move::none();
         Flag flag;
-        int8_t depth;
-        int16_t eval;
+        int8_t depth = 0;
+        int16_t eval = 0;
     };
 
     struct TranspositionTable {
@@ -34,7 +34,7 @@ namespace Sigmoid {
         }
 
         void clear(){
-            std::memset(entries, 0, numberOfEntries * sizeof(Entry));
+            std::fill(entries, entries + numberOfEntries, Entry{});
         }
 
         void store(uint64_t key, const Move& move, Flag flag, int8_t depth, int16_t eval){

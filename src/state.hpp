@@ -26,8 +26,9 @@ namespace Sigmoid{
             for (Piece& p : pieceMap)
                 p = NONE;
 
-            zobristKey = castling = halfMove = fullMove = 0;
-            enPassantSquare = NO_EN_PASSANT_SQUARE;
+            zobristKey = castling = halfMove = 0;
+            fullMove = 1;
+            enPassantSquare = NO_SQUARE;
         }
 
         template<Color color>
@@ -36,7 +37,7 @@ namespace Sigmoid{
         }
 
         template<Color color>
-        bool get_bit(int square, Piece piece) const{
+        [[nodiscard]] bool get_bit(int square, Piece piece) const{
             return bitboards[piece].get<color>(square);
         }
 
@@ -65,13 +66,13 @@ namespace Sigmoid{
         }
 
         template<Color us>
-        uint8_t get_k_castling() const{
+        [[nodiscard]] uint8_t get_k_castling() const{
             constexpr uint8_t result = us == WHITE ? K : k;
             return result;
         }
 
         template<Color us>
-        uint8_t get_q_castling() const{
+        [[nodiscard]] uint8_t get_q_castling() const{
             constexpr uint8_t result = us == WHITE ? Q : q;
             return result;
         }
@@ -83,12 +84,12 @@ namespace Sigmoid{
         }
 
         template<Color us>
-        bool is_some_castling_set() const{
+        [[nodiscard]] bool is_some_castling_set() const{
             return is_castling_set<us, true>() || is_castling_set<us, false>();
         }
 
         template<Color us, bool Q>
-        bool is_castling_set() const{
+        [[nodiscard]] bool is_castling_set() const{
             if constexpr (Q){
                 return (get_q_castling<us>() & castling) != 0;
             }

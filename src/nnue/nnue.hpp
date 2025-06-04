@@ -28,6 +28,11 @@ namespace Sigmoid{
 
         std::string NET_PATH = "../src/nnue/singularity_v2_4-40.bin";
 
+        NNUE() {
+            load_from_file();
+            reset();
+        }
+
         void pop(){
             index--;
         }
@@ -43,11 +48,12 @@ namespace Sigmoid{
             load_from_file();
         }
 
-        int16_t crelu(int value) {
+        static int crelu(int value) {
             return std::clamp(value, 0, qa);
         }
 
         void add(Color pieceColor, Piece piece, int square){
+            assert(index >= 0);
             Accumulator* current_accumulator = &stack[index];
             int w_feature_index = get_index<WHITE>(pieceColor, piece, square);
             int b_feature_index = get_index<BLACK>(pieceColor, piece, square);
@@ -57,6 +63,7 @@ namespace Sigmoid{
         }
 
         void sub(Color pieceColor, Piece piece, int square){
+            assert(index >= 0);
             Accumulator* current_accumulator = &stack[index];
             int w_feature_index = get_index<WHITE>(pieceColor, piece, square);
             int b_feature_index = get_index<BLACK>(pieceColor, piece, square);
@@ -71,27 +78,25 @@ namespace Sigmoid{
         }
 
         template<Color color>
-        int16_t eval(){
+        int16_t eval() {
+            assert(index >= 0);
             const auto our_accumulator = stack[index].get<color>();
             const auto opp_accumulator = stack[index].get<~color>();
 
             int eval = hiddenLayerBiases[0];
-            for (int i = 0 ; i < HIDDEN_LAYER_SIZE; i++){
+            for (int i = 0 ; i < HIDDEN_LAYER_SIZE; i++)
                 eval += hiddenLayerWeights[i] * crelu(our_accumulator[i]);
-            }
 
-            for (int i = 0; i < HIDDEN_LAYER_SIZE; i++){
+            for (int i = 0; i < HIDDEN_LAYER_SIZE; i++)
                 eval += hiddenLayerWeights[i + HIDDEN_LAYER_SIZE] * crelu(opp_accumulator[i]);
-            }
 
             eval *= scale;
             eval /= qa * qb;
-
             return eval;
         }
 
         template<Color perspective>
-        int16_t get_index(Color pieceColor, Piece piece, int square){
+        int get_index(Color pieceColor, Piece piece, int square){
             int color_index = (pieceColor == perspective) ? 0 : 1;
             int piece_index = piece;
             int square_index = perspective == WHITE ? square ^ 56: square;
