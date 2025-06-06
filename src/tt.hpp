@@ -38,10 +38,10 @@ namespace Sigmoid {
         }
 
         void store(uint64_t key, const Move& move, Flag flag, int8_t depth, int16_t eval){
-            // TODO handle mates.
+            if (eval >= CHECKMATE_BOUND) eval = CHECKMATE;
+            if (eval <= -CHECKMATE_BOUND) eval = -CHECKMATE;
 
             const int index = get_index(key);
-            // For now always replace.
             entries[index] = {key, move, flag, depth, eval};
         }
 
@@ -49,10 +49,9 @@ namespace Sigmoid {
             __builtin_prefetch(&entries[get_index(key)]);
         }
 
-        std::pair<const Entry&, bool> probe(uint64_t key){
+        std::pair<Entry, bool> probe(uint64_t key){
             const int index = get_index(key);
-            // maybe tt probe copy, cuz multithread.
-            const Entry& entry = entries[index];
+            Entry entry = entries[index];
             return {entry, entry.key == key};
         }
 

@@ -23,7 +23,7 @@ namespace Sigmoid {
         Worker(Board board, TranspositionTable* tt, WorkerHelper* wh, Timer* timer ,int searchDepth) :
             board(std::move(board)), tt(tt), workerHelper(wh), timer(timer), searchDepth(searchDepth) {}
 
-        bool is_time_out() {
+        [[nodiscard]] bool is_time_out() const {
             if (searchDepth != MAX_PLY - 1)
                 return false;
 
@@ -54,6 +54,7 @@ namespace Sigmoid {
         template<NodeType nodeType>
         int16_t negamax(int depth, int16_t alpha, int16_t beta, StackItem* stack) {
             constexpr bool root_node = nodeType == ROOT;
+            constexpr bool pv_node = root_node || nodeType == PV;
 
             if (is_time_out())
                 return MIN_VALUE;
@@ -61,25 +62,67 @@ namespace Sigmoid {
             if (board.is_draw())
                 return DRAW;
 
-            if (depth == 0)
-                return q_search(alpha, beta, stack);
-
             if (stack->ply >= MAX_PLY)
                 return board.eval();
+            /*
+            auto [entry, hit] = tt->probe(board.currentState.zobristKey);
+            // TT - cutoffs.
+            if (!pv_node && hit && entry.depth >= depth){
+                int16_t eval;
+                if (std::abs(entry.eval) >= CHECKMATE_BOUND)
+                    eval = entry.eval - stack->ply * (entry.eval / std::abs(entry.eval));
+                else
+                    eval = entry.eval;
+
+                if (entry.flag == EXACT)
+                    return eval;
+                // alpha stored -> alpha >= beta.
+                else if (entry.flag == LOWER_BOUND && beta <= entry.eval)
+                    return eval;
+                // beta stored -> alpha >= beta.
+                else if (entry.flag == UPPER_BOUND && alpha >= entry.eval)
+                    return eval;
+            }
+            */
+            if (depth == 0)
+                return q_search(alpha, beta, stack);
 
             const bool in_check = board.in_check();
 
             MoveList<false> ml(&board);
             Move move;
             int move_count = 0;
+
             int16_t best_value = MIN_VALUE;
+            //Flag tt_flag = UPPER_BOUND;
+            //Move best_move;
+
+            int16_t value;
             while ((move = ml.get()) != Move::none()){
                 if (!board.make_move(move))
                     continue;
 
+                //tt->prefetch(board.currentState.zobristKey);
                 move_count++;
                 result.nodesVisited++;
-                int16_t value = static_cast<int16_t>(-negamax<PV>(depth - 1, -beta, -alpha, stack + 1));
+
+                // Late moves "reductions"
+                if (pv_node && move_count == 1){
+                    value = static_cast<int16_t>(-negamax<PV>(depth - 1, -beta, -alpha, stack + 1));
+                }
+                else{
+                    // Reduced search [TODO]
+                    value = static_cast<int16_t>(-negamax<NONPV>(depth - 1, -alpha - 1, -alpha, stack + 1));
+
+                    // If move is looking promising, search in a full depth.
+                    // TODO
+
+                    bool full_search = value >= alpha && value <= beta;
+                    if (full_search && pv_node)
+                        value = static_cast<int16_t>(-negamax<PV>(depth - 1, -beta, -alpha, stack + 1));
+                    else if(full_search)
+                        value = static_cast<int16_t>(-negamax<NONPV>(depth - 1, -beta, -alpha, stack + 1));
+                }
 
                 board.undo_move();
 
@@ -88,15 +131,21 @@ namespace Sigmoid {
 
                 if (value > best_value) {
                     best_value = value;
+                    //best_move = move;
+
                     if constexpr (root_node) {
                         result.bestMove = move;
                     }
 
-                    if (value > alpha)
+                    if (value > alpha){
                         alpha = value;
+                        //tt_flag = EXACT;
+                    }
 
-                    if (value >= beta)
+                    if (value >= beta){
+                        //tt_flag = LOWER_BOUND;
                         break;
+                    }
                 }
             }
 
@@ -105,7 +154,7 @@ namespace Sigmoid {
             else if (move_count == 0)
                 return DRAW;
 
-            // TODO TT store.
+            //tt->store(board.currentState.zobristKey, best_move, tt_flag, depth, best_value);
             return best_value;
         }
 
