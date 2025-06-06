@@ -135,7 +135,7 @@ namespace Sigmoid{
             // King
             bb = state.bitboards[KING].get<us>();
             pos = bit_scan_forward_pop_lsb(bb);
-            bitboard_to_moves(pos, kingMoves[pos]);
+            bitboard_to_moves(pos, captures ? kingMoves[pos] & enemy_bits : kingMoves[pos]);
             const auto castlingMasks = CASTLING_FREE_MASKS[us];
 
             if (!captures && state.is_castling_set<us, false>() && (castlingMasks[K_CASTLE] & merged_bits) == 0){

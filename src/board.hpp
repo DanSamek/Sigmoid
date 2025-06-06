@@ -29,7 +29,7 @@ namespace Sigmoid {
         Board(): ply(0) { }
 
         bool is_capture(const Move& move){
-            return currentState.pieceMap[move.to()] != NONE;
+            return currentState.pieceMap[move.to()] != NONE || move.special_type() == Move::EN_PASSANT;
         }
 
         Piece at(int square){
@@ -57,7 +57,7 @@ namespace Sigmoid {
 
             new_state.fullMove += us == BLACK;
 
-            const bool is_cap = is_capture(move);
+            const bool is_cap = at(move.to()) != Piece::NONE;
             const Piece piece = at(move.from());
             const int from = move.from();
             const int to = move.to();

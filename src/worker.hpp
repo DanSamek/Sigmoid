@@ -62,18 +62,18 @@ namespace Sigmoid {
                 return DRAW;
 
             if (depth == 0)
-                return board.eval();
+                return board.eval(); // q_search(alpha, beta, stack);
 
             if (stack->ply >= MAX_PLY)
                 return board.eval();
 
             const bool in_check = board.in_check();
 
-            MoveList<false> mp(&board);
+            MoveList<false> ml(&board);
             Move move;
             int move_count = 0;
             int16_t best_value = MIN_VALUE;
-            while ((move = mp.get()) != Move::none()){
+            while ((move = ml.get()) != Move::none()){
                 if (!board.make_move(move))
                     continue;
 
@@ -110,11 +110,43 @@ namespace Sigmoid {
         }
 
         //template<NodeType nodeType>
-        /*
-         * TODO
-        int16_t q_search(int16_t alpha, int16_t beta) {
+        int16_t q_search(int16_t alpha, int16_t beta, StackItem* stack) {
+            int16_t best_value = board.eval();
+            if (stack->ply >= MAX_PLY)
+                return best_value;
 
-        }*/
+            if (best_value >= beta)
+                return best_value;
+            if (best_value > alpha)
+                alpha = best_value;
+
+            MoveList<true> ml(&board);
+            Move move;
+            while ((move = ml.get()) != Move::none()){
+                if (!board.make_move(move))
+                    continue;
+
+                result.nodesVisited++;
+                int16_t value = static_cast<int16_t>(-q_search(-beta, -alpha, stack + 1));
+
+                board.undo_move();
+
+                if (is_time_out())
+                    return MIN_VALUE;
+
+                if (value > best_value) {
+                    best_value = value;
+
+                    if (value > alpha)
+                        alpha = value;
+
+                    if (value >= beta)
+                        break;
+                }
+            }
+
+            return best_value;
+        }
     };
 }
 
