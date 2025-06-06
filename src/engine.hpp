@@ -44,13 +44,10 @@ namespace Sigmoid {
             for (std::thread& search_thread : search_threads)
                 search_thread.join();
 
-            if (options.datagen){
-                options.score = worker_helper.bestResult.score;
-                options.totalNodesVisited = worker_helper.totalNodesVisited;
-            }
-            else{
+            options.score = worker_helper.bestResult.score;
+            options.totalNodesVisited = worker_helper.totalNodesVisited;
+            if (!options.datagen)
                 std::cout << "bestmove " << worker_helper.bestResult.bestMove.to_uci() << std::endl;
-            }
         }
     };
 }
