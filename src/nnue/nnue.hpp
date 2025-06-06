@@ -9,9 +9,10 @@
 #include "../constants.hpp"
 #include "../color.hpp"
 #include "../piece.hpp"
+#include "sentinel_nnue.hpp"
 
 namespace Sigmoid{
-
+    // TODO custom net 768 -> 128 -> 1 [no perspective] -- to find out, how bad it will be against perspective network.
     struct NNUE{
         std::array<Accumulator, STACK_SIZE_P1> stack;
         int index = 0;
@@ -107,12 +108,11 @@ namespace Sigmoid{
         }
 
         template<typename T>
-        T read_number(std::ifstream & stream){
+        T read_number(std::istringstream& stream){
             T value;
             stream.read(reinterpret_cast<char*>(&value), sizeof(value));
             return value;
         }
-
 
         static inline bool loaded = false;
 
@@ -120,9 +120,9 @@ namespace Sigmoid{
             if (loaded)
                 return;
 
-            auto stream = std::ifstream(NET_PATH, std::ios::binary);
-            if(!stream.is_open())
-                throw std::invalid_argument("File cannot be opened.");
+            std::istringstream stream;
+            auto size = sizeof(SENTINEL_NNUE) / sizeof (unsigned char);
+            stream.rdbuf()->pubsetbuf((char *) SENTINEL_NNUE, size);
 
             for(int i = 0; i < NUM_FEATURES; i++)
                 for(int x = 0; x < HIDDEN_LAYER_SIZE; x++)

@@ -1,6 +1,8 @@
 #ifndef SIGMOID_BENCHER_HPP
 #define SIGMOID_BENCHER_HPP
 
+#include <chrono>
+
 #include "engine.hpp"
 
 struct Bencher{
@@ -44,10 +46,12 @@ struct Bencher{
             "2rqr1k1/1p3p1p/p2p2p1/P1nPb3/2B1P3/5P2/1PQ2NPP/R1R4K w - - 3 25",
     };
 
-    static inline constexpr int BENCH_DEPTH = 4;
+    static inline constexpr int BENCH_DEPTH = 5;
     static void bench(){
         Zobrist::init();
         Movegen::init();
+
+        auto startTime = std::chrono::high_resolution_clock::now();
 
         uint64_t totalVisited = 0;
         Board b;
@@ -63,7 +67,9 @@ struct Bencher{
             std::cout << " " << std::endl;
         }
 
-        std::cout << std::endl << "bench: " << totalVisited << std::endl;
+        auto now = std::chrono::high_resolution_clock::now();
+        auto result = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime);
+        std::cout << std::endl << totalVisited  << " nodes " << (totalVisited * 1000) / result.count() << " nps" << std::endl;
     }
 };
 
