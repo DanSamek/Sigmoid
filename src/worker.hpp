@@ -116,10 +116,10 @@ namespace Sigmoid {
                         r += 128;
 
                     int reduced_depth = std::max(depth - 1 - r / 128, 0);
-                    value = static_cast<int16_t>(-negamax<NONPV>(reduced_depth, -alpha, -alpha + 1, stack + 1));
+                    value = static_cast<int16_t>(-negamax<NONPV>(reduced_depth, -alpha - 1, -alpha, stack + 1));
                     // If move is looking promising, search in a full depth.
                     if (value > alpha && r)
-                        value = static_cast<int16_t>(-negamax<NONPV>(depth - 1, -alpha, -alpha + 1, stack + 1));
+                        value = static_cast<int16_t>(-negamax<NONPV>(depth - 1, -alpha - 1, -alpha, stack + 1));
 
                     bool full_search = value > alpha;
                     if (full_search && pv_node)
