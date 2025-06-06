@@ -6,12 +6,15 @@
 #include "move.hpp"
 #include "constants.hpp"
 #include "movegen.hpp"
+#include "history.hpp"
 
 namespace Sigmoid {
 
     template<bool captures>
     struct MoveList {
+        MoveList(const Board* board, const MainHistory* mainHistory) : board(board), mainHistory(mainHistory){}
         MoveList(const Board* board) : board(board){}
+
 
         Move get(){
             if (!generated){
@@ -46,14 +49,18 @@ namespace Sigmoid {
                 Piece from = board->at(move.from());
                 if (capture){
                     Piece to = move.special_type() == Move::EN_PASSANT ? PAWN : board->at(move.to());
-                    scores[i] = ((to + 1) * 1000) * (KING - from + 1);
+                    scores[i] = ((to + 1) * 10000) * (KING - from + 1);
                 }
                 else{
-                    // TODO
+                    if (mainHistory)
+                        scores[i] = (*mainHistory)[board->whoPlay][move.from()][move.to()];
                 }
             }
         }
+
         const Board* board;
+        const MainHistory* mainHistory = nullptr;
+
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
 
         std::array<int, MAX_POSSIBLE_MOVES> scores;

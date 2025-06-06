@@ -17,5 +17,10 @@ namespace Sigmoid {
     constexpr int16_t MIN_VALUE = -32000;
     constexpr int16_t CHECKMATE = MAX_VALUE - (MAX_PLY + 1);
     constexpr int16_t DRAW = 0;
+
+    constexpr int16_t NUM_SQUARES = 64;
+    constexpr int16_t NUM_PIECES  = 6;
+    constexpr int16_t NUM_COLORS  = 2;
+
 }
 #endif //SIGMOID_CONSTANTS_HPP
