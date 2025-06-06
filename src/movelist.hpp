@@ -16,18 +16,50 @@ namespace Sigmoid {
         Move get(){
             if (!generated){
                 Movegen::generate_moves<captures>(board->currentState, board->whoPlay, moves, size);
+                score_moves();
                 generated = true;
             }
-            return iterIndex < size ? moves[iterIndex++] : Move::none();
+            return pick_move();
         }
 
     private:
+        Move pick_move(){
+            if (size <= 0)
+                return Move::none();
+
+            for (int i = 0; i < size - 1; i++){
+                if (scores[i] > scores[i + 1]){
+                    std::swap(scores[i], scores[i + 1]);
+                    std::swap(moves[i], moves[i + 1]);
+                }
+            }
+
+            return moves[--size];
+        }
+
+        void score_moves(){
+            for (int i = 0; i < size; i++){
+                scores[i] = 0;
+                Move move = moves[i];
+                bool capture = board->is_capture(move);
+
+                Piece from = board->at(move.from());
+                if (capture){
+                    Piece to = move.special_type() == Move::EN_PASSANT ? PAWN : board->at(move.to());
+                    scores[i] = ((to + 1) * 1000) * (KING - from + 1);
+                }
+                else{
+                    // TODO
+                }
+            }
+        }
         const Board* board;
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
+
+        std::array<int, MAX_POSSIBLE_MOVES> scores;
         int size = 0;
 
         bool generated = false;
-        int iterIndex = 0;
     };
 }
 

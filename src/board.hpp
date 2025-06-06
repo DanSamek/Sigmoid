@@ -28,11 +28,11 @@ namespace Sigmoid {
 
         Board(): ply(0) { }
 
-        bool is_capture(const Move& move){
+        [[nodiscard]] bool is_capture(const Move& move) const {
             return currentState.pieceMap[move.to()] != NONE || move.special_type() == Move::EN_PASSANT;
         }
 
-        Piece at(int square){
+        Piece at(int square) const{
             return currentState.pieceMap[square];
         }
 
