@@ -63,7 +63,7 @@ namespace Sigmoid{
                 ms = 1;
 
             std::cout << "info score cp " << bestResult.score << " depth "
-            << searchDepth << " bestmove " << bestResult.bestMove.to_uci()
+            << searchDepth << " pv " << bestResult.bestMove.to_uci()
             << " nodes "<< totalNodesVisited  << " time " << ms << " nps " << (totalNodesVisited *1000) / ms << std::endl;
         }
     };
