@@ -62,7 +62,7 @@ namespace Sigmoid {
                 return DRAW;
 
             if (depth == 0)
-                return board.eval(); // q_search(alpha, beta, stack);
+                return q_search(alpha, beta, stack);
 
             if (stack->ply >= MAX_PLY)
                 return board.eval();
