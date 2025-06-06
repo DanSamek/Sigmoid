@@ -109,6 +109,25 @@ namespace Sigmoid{
             if (index != -1)
                 disable_castling_index(index);
         }
+
+        [[nodiscard]] std::string castling_str() const{
+            if (!is_some_castling_set<WHITE>() && !is_some_castling_set<BLACK>())
+                return "-";
+
+            std::ostringstream oss;
+            if (is_castling_set<WHITE, false>())
+                oss << "K";
+            if (is_castling_set<WHITE, true>())
+                oss << "Q";
+
+            if (is_castling_set<BLACK, false>())
+                oss << "k";
+            if (is_castling_set<BLACK, true>())
+                oss << "q";
+
+            std::string result = oss.str();
+            return result;
+        }
     };
 }
 

@@ -7,6 +7,7 @@
 
 #include "search.hpp"
 #include "constants.hpp"
+#include "timer.hpp"
 
 namespace Sigmoid{
 
@@ -16,8 +17,10 @@ namespace Sigmoid{
         std::mutex resultLock;
         SearchResult bestResult;
         bool datagen;
+        uint64_t totalNodesVisited = 0ULL;
+        Timer* timer;
 
-        WorkerHelper(int threadCnt, bool datagen) : threadCnt(threadCnt), datagen(datagen) { }
+        WorkerHelper(int threadCnt, bool datagen, Timer* timer) : threadCnt(threadCnt), datagen(datagen), timer(timer) { }
 
         void enter_search_result(const int searchDepth, const SearchResult& searchResult){
             std::unique_lock lock(resultLock);
@@ -30,9 +33,8 @@ namespace Sigmoid{
         void save_depth_best_result(const int searchDepth){
             std::map<Move, int> votes;
 
-            uint64_t total_nodes_visited = 0;
             for (const SearchResult& s_result : depthSearchDone[searchDepth]) {
-                total_nodes_visited += s_result.nodesVisited;
+                totalNodesVisited += s_result.nodesVisited;
                 votes[s_result.bestMove] ++;
             }
 
@@ -55,9 +57,14 @@ namespace Sigmoid{
             depthSearchDone.erase(searchDepth);
 
             if (datagen) return;
+
+            int64_t ms = timer->get_ms();
+            if (!ms)
+                ms = 1;
+
             std::cout << "info score cp " << bestResult.score << " depth "
             << searchDepth << " bestmove " << bestResult.bestMove.to_uci()
-            << " nodes "<< total_nodes_visited << std::endl;
+            << " nodes "<< totalNodesVisited  << " time " << ms << " nps " << (totalNodesVisited *1000) / ms << std::endl;
         }
     };
 }

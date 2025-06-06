@@ -18,6 +18,17 @@ namespace Sigmoid {
             {'q', QUEEN},
             {'k', KING}
     };
+
+
+    [[nodiscard]] static inline std::string square_to_uci(uint8_t square){
+        int file = square / 8;
+        int rank = square % 8;
+
+        std::ostringstream oss;
+        oss << (char)(rank + 'a') << ((7 - file) + 1);
+        std::string result = oss.str();
+        return result;
+    }
 }
 
 #endif //SIGMOID_HELPER_HPP

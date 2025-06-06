@@ -8,6 +8,7 @@
 #include "worker_helper.hpp"
 #include "tt.hpp"
 #include "movelist.hpp"
+#include "timer.hpp"
 
 namespace Sigmoid {
 
@@ -16,14 +17,17 @@ namespace Sigmoid {
         TranspositionTable* tt;
         WorkerHelper* workerHelper;
         SearchResult result;
+        Timer* timer;
         int searchDepth;
 
-        Worker(Board board, TranspositionTable* tt, WorkerHelper* wh, int searchDepth) :
-            board(std::move(board)), tt(tt), workerHelper(wh), searchDepth(searchDepth) {}
+        Worker(Board board, TranspositionTable* tt, WorkerHelper* wh, Timer* timer ,int searchDepth) :
+            board(std::move(board)), tt(tt), workerHelper(wh), timer(timer), searchDepth(searchDepth) {}
 
-        bool time_out() {
-            // TODO just check time.
-            return false;
+        bool is_time_out() {
+            if (searchDepth != MAX_PLY - 1)
+                return false;
+
+            return timer->is_time_out();
         }
 
         void iterative_deepening() {
@@ -38,6 +42,10 @@ namespace Sigmoid {
 
             for (int depth = 1; depth <= searchDepth; depth++){
                 int16_t eval = negamax<ROOT>(depth, MIN_VALUE, MAX_VALUE, root);
+
+                if (is_time_out())
+                    break;
+
                 result.score = eval;
                 workerHelper->enter_search_result(depth, result);
             }
@@ -46,6 +54,10 @@ namespace Sigmoid {
         template<NodeType nodeType>
         int16_t negamax(int depth, int16_t alpha, int16_t beta, StackItem* stack) {
             constexpr bool root_node = nodeType == ROOT;
+
+            if (is_time_out())
+                return MIN_VALUE;
+
             if (board.is_draw())
                 return DRAW;
 
@@ -68,7 +80,11 @@ namespace Sigmoid {
                 move_count++;
                 result.nodesVisited++;
                 int16_t value = static_cast<int16_t>(-negamax<PV>(depth - 1, -beta, -alpha, stack + 1));
+
                 board.undo_move();
+
+                if (is_time_out())
+                    return MIN_VALUE;
 
                 if (value > best_value) {
                     best_value = value;
@@ -84,13 +100,12 @@ namespace Sigmoid {
                 }
             }
 
-            // TODO TT store.
-            if (move_count == 0 && in_check){
+            if (move_count == 0 && in_check)
                 return -CHECKMATE + stack->ply;
-            }
             else if (move_count == 0)
                 return DRAW;
 
+            // TODO TT store.
             return best_value;
         }
 

@@ -22,7 +22,7 @@ namespace Sigmoid {
     };
 
     struct TranspositionTable {
-        int numberOfEntries;
+        size_t numberOfEntries;
         Entry* entries = nullptr;
 
         void resize(int sizeMB) {

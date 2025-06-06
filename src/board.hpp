@@ -176,7 +176,7 @@ namespace Sigmoid {
                         : Movegen::is_square_attacked<WHITE>(currentState, king_square);
         }
 
-        int eval() {
+        int16_t eval() {
             return whoPlay == WHITE ? nnue.eval<WHITE>() : nnue.eval<BLACK>();
         }
 
@@ -273,9 +273,52 @@ namespace Sigmoid {
             std::cout << std::endl;
         }
 
-        // TODO -- will be used in datagen -- oneday.
-        std::string get_fen(){
-            return "";
+
+        // rnbqkbnr/pppppppp/8/8/52P3/8/PPPP49PPP/RNBQKBNR b KQkq e3 0 1
+        [[nodiscard]] std::string get_fen(){
+            int no_piece_cnt = 0;
+            std::ostringstream oss;
+            for (int square = 0; square < 64; square++){
+                Piece pc = at(square);
+                if (pc == NONE){
+                    no_piece_cnt++;
+                }
+                else{
+                    if (no_piece_cnt) {
+                        oss << char('0' + no_piece_cnt);
+                        no_piece_cnt = 0;
+                    }
+                    uint64_t wbb = currentState.bitboards[pc].get<WHITE>();
+                    if (get_nth_bit(wbb, square))
+                        oss << piece_char<WHITE>(pc);
+                    else
+                        oss << piece_char<BLACK>(pc);
+                }
+
+                if ((square + 1) % 8 == 0){
+                    if (no_piece_cnt)
+                        oss << (char)('0' + no_piece_cnt);
+                    no_piece_cnt = 0;
+
+                    if (square != 63)
+                        oss << "/";
+                }
+            }
+
+            oss << " ";
+            oss << (whoPlay == WHITE ? 'w' : 'b') << " ";
+
+            oss << currentState.castling_str() << " ";
+
+            if (currentState.enPassantSquare == NO_SQUARE)
+                oss << "- ";
+            else
+                oss << square_to_uci(currentState.enPassantSquare) << " ";
+
+            oss << currentState.halfMove << " " << currentState.fullMove;
+
+            std::string result = oss.str();
+            return result;
         }
 
         [[nodiscard]] bool is_draw() const{
@@ -394,7 +437,6 @@ namespace Sigmoid {
             return occ;
         }
 
-        // TODO pins
         template<Color us>
         bool is_illegal(const State& state, const Move& move){
             if (move.special_type() == Move::CASTLE){

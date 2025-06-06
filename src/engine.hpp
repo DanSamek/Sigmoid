@@ -7,6 +7,7 @@
 #include "board.hpp"
 #include "tt.hpp"
 #include "worker.hpp"
+#include "timer.hpp"
 
 namespace Sigmoid {
 
@@ -16,24 +17,27 @@ namespace Sigmoid {
             int wTime, bTime;
             int wInc, bInc;
 
-            int threadCnt;
-            TranspositionTable* tt;
+            int threadCnt = 1;
+            TranspositionTable* tt = nullptr;
             Board board;
 
             // Datagen stuff
             int softNodes = 5000;
             bool datagen = false;
 
-            int16_t score; // Out value.
+            // Out values.
+            int16_t score;
+            uint64_t totalNodesVisited;
         };
 
         void start_searching(Options& options){
-            WorkerHelper worker_helper(options.threadCnt, options.datagen);
+            Timer timer(options.wTime, options.wInc, options.bTime, options.bInc, options.board.whoPlay);
+            WorkerHelper worker_helper(options.threadCnt, options.datagen, &timer);
             std::vector<std::thread> search_threads;
             std::vector<Worker> workers;
 
             for (int i = 0; i < options.threadCnt; ++i) {
-                workers.emplace_back(options.board, options.tt, &worker_helper, options.depth);
+                workers.emplace_back(options.board, options.tt, &worker_helper, &timer, options.depth);
                 search_threads.emplace_back(&Worker::iterative_deepening, &workers[i]);
             }
 
@@ -41,6 +45,7 @@ namespace Sigmoid {
                 search_thread.join();
 
             options.score = worker_helper.bestResult.score;
+            options.totalNodesVisited = worker_helper.totalNodesVisited;
         }
     };
 }

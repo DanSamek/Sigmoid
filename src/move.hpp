@@ -2,11 +2,12 @@
 #ifndef SIGMOID_MOVE_HPP
 #define SIGMOID_MOVE_HPP
 
-#include <stdint.h>
+#include <cstdint>
 #include <cassert>
 #include <sstream>
 
 #include "piece.hpp"
+#include "helper.hpp"
 
 namespace Sigmoid{
     // [en-passant|castle|promo[KNIGHT, BISHOP, ROOK, QUEEN], NONE]
@@ -71,18 +72,9 @@ namespace Sigmoid{
 
         [[nodiscard]] std::string to_uci() const{
             std::ostringstream oss;
-            auto sq_to_uci = [](uint8_t square)->std::string{
-                int file = square / 8;
-                int rank = square % 8;
 
-                std::ostringstream oss;
-                oss << (char)(rank + 'a') << ((7 - file) + 1);
-                std::string result = oss.str();
-                return result;
-            };
-
-            oss << sq_to_uci(from());
-            oss << sq_to_uci(to());
+            oss << square_to_uci(from());
+            oss << square_to_uci(to());
             if (promo_piece() != Piece::NONE)
                 oss << piece_char<BLACK>(promo_piece());
 

@@ -7,6 +7,7 @@
 #include "../zobrist.hpp"
 #include "../board.hpp"
 #include "../movelist.hpp"
+#include "test_helper.hpp"
 
 using namespace Sigmoid;
 
@@ -14,11 +15,6 @@ struct ZobristTests : public Test{
 
     std::string test_name() const override{
         return "ZobristTests";
-    }
-
-    static inline void throwable_assert(bool condition) {
-        if (condition) return;
-        throw std::out_of_range("assert failed.");
     }
 
     void run() const override{
@@ -29,37 +25,37 @@ struct ZobristTests : public Test{
         MoveList<false> moves(&b);
 
         uint64_t zobrist = b.currentState.zobristKey;
-        throwable_assert(b.make_move(moves.get()) == true);
-        throwable_assert(zobrist != b.currentState.zobristKey);
+        throwable_assert(b.make_move(moves.get()), true);
+        throwable_assert(zobrist != b.currentState.zobristKey, true);
 
         b.undo_move();
 
-        throwable_assert(zobrist == b.currentState.zobristKey);
-        throwable_assert(initHash == zobrist);
-        throwable_assert(initHash == b.currentState.zobristKey);
+        throwable_assert(zobrist,  b.currentState.zobristKey);
+        throwable_assert(initHash , zobrist);
+        throwable_assert(initHash , b.currentState.zobristKey);
 
 
         // 2 MOVES.
-        throwable_assert(b.make_move(moves.get()) == true);
+        throwable_assert(b.make_move(moves.get()), true);
         uint64_t zobrist1 = b.currentState.zobristKey;
 
         MoveList<false> moves2(&b);
 
-        throwable_assert(b.make_move(moves2.get()) == true);
+        throwable_assert(b.make_move(moves2.get()), true);
 
         uint64_t zobrist2 = b.currentState.zobristKey; // uniq
         b.undo_move();
 
-        throwable_assert(b.currentState.zobristKey == zobrist1);
+        throwable_assert(b.currentState.zobristKey, zobrist1);
         b.undo_move();
 
-        throwable_assert(b.currentState.zobristKey == zobrist);
-        throwable_assert(zobrist2 != zobrist && zobrist2 != zobrist1);
+        throwable_assert(b.currentState.zobristKey, zobrist);
+        throwable_assert(zobrist2 != zobrist && zobrist2 != zobrist1, true);
 
         // try simple position with different moves.
         b.load_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         // load init pos
-        throwable_assert(b.currentState.zobristKey == initHash);
+        throwable_assert(b.currentState.zobristKey, initHash);
 
 
         MoveList<false> moves3(&b);
@@ -92,7 +88,7 @@ struct ZobristTests : public Test{
 
         // reset.
         b.load_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        throwable_assert(b.currentState.zobristKey == initHash);
+        throwable_assert(b.currentState.zobristKey, initHash);
 
         // from = 62 to 45
         moves3 = MoveList<false>(&b);
@@ -119,7 +115,7 @@ struct ZobristTests : public Test{
         b.print_state();
 
 
-        throwable_assert(b.currentState.zobristKey == patternHash);
+        throwable_assert(b.currentState.zobristKey, patternHash);
 
 
         // end-game shuffling with pieces.
@@ -132,7 +128,7 @@ struct ZobristTests : public Test{
 
         moves3 = MoveList<false>(&b);
         b.make_move(try_find_move(moves3, 7, 63)); // DOWN b rook
-        throwable_assert(initHash != b.currentState.zobristKey);
+        throwable_assert(initHash != b.currentState.zobristKey, true);
         b.print_state();
 
         moves3 = MoveList<false>(&b);
@@ -143,8 +139,8 @@ struct ZobristTests : public Test{
 
         b.print_state();
 
-        throwable_assert(initHash == b.currentState.zobristKey);
-        throwable_assert(!b.is_draw());
+        throwable_assert(initHash , b.currentState.zobristKey);
+        throwable_assert(!b.is_draw(), true);
         // try 3-fold repetition.
 
         moves3 = MoveList<false>(&b);
@@ -152,7 +148,7 @@ struct ZobristTests : public Test{
 
         moves3 = MoveList<false>(&b);
         b.make_move(try_find_move(moves3, 7, 63)); // DOWN b rook
-        throwable_assert(initHash != b.currentState.zobristKey);
+        throwable_assert(initHash != b.currentState.zobristKey, true);
         b.print_state();
 
         moves3 = MoveList<false>(&b);
@@ -162,8 +158,8 @@ struct ZobristTests : public Test{
         b.make_move(try_find_move(moves3, 63, 7)); // UP b rook
 
         b.print_state();
-        throwable_assert(initHash == b.currentState.zobristKey);
-        throwable_assert(b.is_draw());
+        throwable_assert(initHash, b.currentState.zobristKey);
+        throwable_assert(b.is_draw(), true);
 
         b.load_from_fen("7r/8/8/4k3/8/4K3/8/R7 w - - 0 1");
         uint64_t whiteHash = b.currentState.zobristKey;
@@ -171,7 +167,7 @@ struct ZobristTests : public Test{
         b.load_from_fen("7r/8/8/4k3/8/4K3/8/R7 b - - 0 1");
         uint64_t blackHash = b.currentState.zobristKey;
 
-        throwable_assert(whiteHash != blackHash);
+        throwable_assert(whiteHash != blackHash, true);
     }
 
     static Move try_find_move(MoveList<false>& moves, int from, int to){
@@ -180,7 +176,7 @@ struct ZobristTests : public Test{
             if(move.from() == from && move.to() == to) return move;
         }
 
-        throwable_assert(false);
+        throwable_assert(false, true);
         return Move::none();
     }
 };

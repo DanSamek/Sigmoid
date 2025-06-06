@@ -11,8 +11,6 @@ namespace Sigmoid {
     constexpr int STACK_SIZE = 2048;
     constexpr int STACK_SIZE_P1 = STACK_SIZE + 1;
 
-    constexpr int NO_EN_PASSANT_SQUARE = -1;
-
     constexpr uint8_t NO_SQUARE = -1;
 
     constexpr int16_t MAX_VALUE = 32000;
