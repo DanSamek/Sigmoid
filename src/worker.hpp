@@ -9,6 +9,7 @@
 #include "tt.hpp"
 #include "movelist.hpp"
 #include "timer.hpp"
+#include "history.hpp"
 
 namespace Sigmoid {
 
@@ -19,6 +20,8 @@ namespace Sigmoid {
         SearchResult result;
         Timer* timer;
         int searchDepth;
+
+        MainHistory mainHistory;
 
         Worker(Board board, TranspositionTable* tt, WorkerHelper* wh, Timer* timer ,int searchDepth) :
             board(std::move(board)), tt(tt), workerHelper(wh), timer(timer), searchDepth(searchDepth) {}
@@ -31,6 +34,8 @@ namespace Sigmoid {
         }
 
         void iterative_deepening() {
+            prepare_for_search();
+
             StackItem stack[MAX_PLY + 1];
             StackItem* root = stack + 1;
 
@@ -69,11 +74,16 @@ namespace Sigmoid {
 
             const bool in_check = board.in_check();
 
-            MoveList<false> ml(&board);
+            MoveList<false> ml(&board, &mainHistory);
             Move move;
             int move_count = 0;
+            Move best_move = Move::none();
             int16_t best_value = MIN_VALUE;
+            std::vector<Move> quiet_moves;
+
             while ((move = ml.get()) != Move::none()){
+
+                const bool is_capture = board.is_capture(move);
                 if (!board.make_move(move))
                     continue;
 
@@ -86,8 +96,11 @@ namespace Sigmoid {
                 if (is_time_out())
                     return MIN_VALUE;
 
+
                 if (value > best_value) {
                     best_value = value;
+                    best_move = move;
+
                     if constexpr (root_node) {
                         result.bestMove = move;
                     }
@@ -98,7 +111,13 @@ namespace Sigmoid {
                     if (value >= beta)
                         break;
                 }
+
+                if (!is_capture && move != best_move)
+                    quiet_moves.emplace_back(move);
             }
+
+            if (best_move != Move::none())
+                update_quiet_histories(best_move, quiet_moves);
 
             if (move_count == 0 && in_check)
                 return -CHECKMATE + stack->ply;
@@ -146,6 +165,20 @@ namespace Sigmoid {
             }
 
             return best_value;
+        }
+
+        void update_quiet_histories(Move bestMove, const std::vector<Move>& quietMoves){
+            apply_gravity<int16_t>(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], 700);
+
+            for (const Move& move: quietMoves)
+                apply_gravity<int16_t>(mainHistory[board.whoPlay][move.from()][move.to()], -250);
+        }
+
+        void prepare_for_search(){
+            for (auto& color : mainHistory)
+                for (auto& from : color)
+                    for (auto& to: from)
+                        to = 0;
         }
     };
 }
