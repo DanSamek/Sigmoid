@@ -111,13 +111,17 @@ namespace Sigmoid {
                     value = static_cast<int16_t>(-negamax<PV>(depth - 1, -beta, -alpha, stack + 1));
                 }
                 else{
-                    // Reduced search [TODO]
-                    value = static_cast<int16_t>(-negamax<NONPV>(depth - 1, -alpha - 1, -alpha, stack + 1));
+                    int r = 0;
+                    if (move_count > 3)
+                        r += 128;
 
+                    int reduced_depth = std::max(depth - 1 - r / 128, 0);
+                    value = static_cast<int16_t>(-negamax<NONPV>(reduced_depth, -alpha, -alpha + 1, stack + 1));
                     // If move is looking promising, search in a full depth.
-                    // TODO
+                    if (value > alpha && r)
+                        value = static_cast<int16_t>(-negamax<NONPV>(depth - 1, -alpha, -alpha + 1, stack + 1));
 
-                    bool full_search = value >= alpha && value <= beta;
+                    bool full_search = value > alpha;
                     if (full_search && pv_node)
                         value = static_cast<int16_t>(-negamax<PV>(depth - 1, -beta, -alpha, stack + 1));
                     else if(full_search)
