@@ -49,7 +49,7 @@ namespace Sigmoid {
                 Piece from = board->at(move.from());
                 if (capture){
                     Piece to = move.special_type() == Move::EN_PASSANT ? PAWN : board->at(move.to());
-                    scores[i] = ((to + 1) * 10000) * (KING - from + 1);
+                    scores[i] = ((to + 1) * 1000) * (KING - from + 1) + QUIET_OFFSET;
                 }
                 else{
                     if (mainHistory)
