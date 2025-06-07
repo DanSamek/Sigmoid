@@ -116,7 +116,7 @@ namespace Sigmoid {
                     quiet_moves.emplace_back(move);
             }
 
-            if (best_move != Move::none())
+            if (best_move != Move::none() && !board.is_capture(best_move))
                 update_quiet_histories(best_move, quiet_moves);
 
             if (move_count == 0 && in_check)
