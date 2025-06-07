@@ -29,6 +29,16 @@ namespace Sigmoid{
     }
 
     using MainHistory = History<int16_t, NUM_COLORS, NUM_SQUARES, NUM_SQUARES>::type;
+
+    constexpr int MAX_KILLERS = 2;
+    constexpr int KILLER_1_BONUS = 100000;
+    constexpr int KILLER_2_BONUS = 75000;
+
+    using KillerMoves = std::array<std::array<Move, MAX_PLY>, MAX_KILLERS>;
+
+    // Offset for all capture moves -- to make sure, that will be searched before all quiets.
+    constexpr int QUIET_OFFSET = KILLER_1_BONUS;
+
 }
 
 #endif //SIGMOID_HISTORY_HPP

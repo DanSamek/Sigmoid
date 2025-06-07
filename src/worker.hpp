@@ -22,6 +22,7 @@ namespace Sigmoid {
         int searchDepth;
 
         MainHistory mainHistory;
+        KillerMoves killerMoves;
 
         Worker(Board board, TranspositionTable* tt, WorkerHelper* wh, Timer* timer ,int searchDepth) :
             board(std::move(board)), tt(tt), workerHelper(wh), timer(timer), searchDepth(searchDepth) {}
@@ -74,7 +75,7 @@ namespace Sigmoid {
 
             const bool in_check = board.in_check();
 
-            MoveList<false> ml(&board, &mainHistory);
+            MoveList<false> ml(&board, &mainHistory, &killerMoves, stack->ply);
             Move move;
             int move_count = 0;
             Move best_move = Move::none();
@@ -116,8 +117,12 @@ namespace Sigmoid {
                     quiet_moves.emplace_back(move);
             }
 
-            if (best_move != Move::none() && !board.is_capture(best_move))
+            if (best_move != Move::none() && !board.is_capture(best_move)){
                 update_quiet_histories(best_move, quiet_moves);
+
+                if (best_value >= beta)
+                    store_killer_move(stack->ply, best_move);
+            }
 
             if (move_count == 0 && in_check)
                 return -CHECKMATE + stack->ply;
@@ -174,11 +179,20 @@ namespace Sigmoid {
                 apply_gravity<int16_t>(mainHistory[board.whoPlay][move.from()][move.to()], -250);
         }
 
+        void store_killer_move(int ply, Move move){
+            killerMoves[ply][1] = killerMoves[ply][0];
+            killerMoves[ply][0] = move;
+        }
+
         void prepare_for_search(){
             for (auto& color : mainHistory)
                 for (auto& from : color)
                     for (auto& to: from)
                         to = 0;
+
+            for (auto& ply : killerMoves)
+                for (auto& move: ply)
+                    move = Move::none();
         }
     };
 }
