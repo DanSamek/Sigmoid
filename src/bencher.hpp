@@ -54,6 +54,8 @@ struct Bencher{
         auto startTime = std::chrono::high_resolution_clock::now();
 
         uint64_t totalVisited = 0;
+        TranspositionTable tt;
+        tt.resize(16);
         Board b;
         for (const std::string& position : positions){
             b.load_from_fen(position);
@@ -62,6 +64,7 @@ struct Bencher{
                 ops.board = b;
                 ops.threadCnt = 1;
                 ops.depth = BENCH_DEPTH;
+                ops.tt = &tt;
             e.start_searching(ops);
             totalVisited += ops.totalNodesVisited;
             std::cout << " " << std::endl;

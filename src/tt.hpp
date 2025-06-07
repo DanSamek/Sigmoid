@@ -7,7 +7,7 @@
 #define SIGMOID_TT_HPP
 
 namespace Sigmoid {
-    enum Flag : int8_t {
+    enum TTFlag : int8_t {
         LOWER_BOUND = 1,
         UPPER_BOUND = 2,
         EXACT = 3
@@ -16,7 +16,7 @@ namespace Sigmoid {
     struct Entry {
         uint64_t key;
         Move move = Move::none();
-        Flag flag;
+        TTFlag flag;
         int8_t depth = 0;
         int16_t eval = 0;
     };
@@ -37,7 +37,7 @@ namespace Sigmoid {
             std::fill(entries, entries + numberOfEntries, Entry{});
         }
 
-        void store(uint64_t key, const Move& move, Flag flag, int8_t depth, int16_t eval){
+        void store(uint64_t key, const Move& move, TTFlag flag, int8_t depth, int16_t eval){
             // TODO handle mates.
 
             const int index = get_index(key);
@@ -51,9 +51,7 @@ namespace Sigmoid {
 
         std::pair<const Entry&, bool> probe(uint64_t key){
             const int index = get_index(key);
-            // maybe tt probe copy, cuz multithread.
-            const Entry& entry = entries[index];
-            return {entry, entry.key == key};
+            return {entries[index], entries[index].key == key};
         }
 
         inline int get_index(const uint64_t& key){

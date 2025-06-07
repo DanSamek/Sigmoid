@@ -29,6 +29,9 @@ namespace Sigmoid{
     }
 
     using MainHistory = History<int16_t, NUM_COLORS, NUM_SQUARES, NUM_SQUARES>::type;
+
+    const int TT_MOVE_VALUE = 1000000;
+    const int QUIET_OFFSET = std::numeric_limits<int16_t>::max();
 }
 
 #endif //SIGMOID_HISTORY_HPP
