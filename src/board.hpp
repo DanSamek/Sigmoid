@@ -36,10 +36,13 @@ namespace Sigmoid {
             return currentState.pieceMap[square];
         }
 
+        const uint64_t& key() const{
+            return currentState.zobristKey;
+        }
+
         bool make_move(const Move& move){
             return whoPlay == WHITE ? make_move<WHITE>(move) : make_move<BLACK>(move);
         }
-
         template<Color us>
         bool make_move(const Move& move) {
             if (is_illegal<us>(currentState, move))

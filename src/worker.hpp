@@ -59,6 +59,7 @@ namespace Sigmoid {
         template<NodeType nodeType>
         int16_t negamax(int depth, int16_t alpha, int16_t beta, StackItem* stack) {
             constexpr bool root_node = nodeType == ROOT;
+            constexpr bool pv_node = root_node || nodeType == PV;
 
             if (is_time_out())
                 return MIN_VALUE;
@@ -66,21 +67,27 @@ namespace Sigmoid {
             if (board.is_draw())
                 return DRAW;
 
-            if (depth == 0)
-                return q_search(alpha, beta, stack);
-
             if (stack->ply >= MAX_PLY)
                 return board.eval();
 
+            auto [entry, hit] = tt->probe(board.key());
+            if (!pv_node && hit && entry.depth >= depth){
+                // TODO TT cutoffs.
+            }
+
+            if (depth == 0)
+                return q_search(alpha, beta, stack);
+
             const bool in_check = board.in_check();
 
-            MoveList<false> ml(&board, &mainHistory);
+            MoveList<false> ml(&board, &mainHistory, &entry.move);
             Move move;
             int move_count = 0;
             Move best_move = Move::none();
             int16_t best_value = MIN_VALUE;
             std::vector<Move> quiet_moves;
 
+            TTFlag flag = UPPER_BOUND;
             while ((move = ml.get()) != Move::none()){
 
                 const bool is_capture = board.is_capture(move);
@@ -89,13 +96,13 @@ namespace Sigmoid {
 
                 move_count++;
                 result.nodesVisited++;
+                tt->prefetch(board.key());
                 int16_t value = static_cast<int16_t>(-negamax<PV>(depth - 1, -beta, -alpha, stack + 1));
 
                 board.undo_move();
 
                 if (is_time_out())
                     return MIN_VALUE;
-
 
                 if (value > best_value) {
                     best_value = value;
@@ -105,11 +112,15 @@ namespace Sigmoid {
                         result.bestMove = move;
                     }
 
-                    if (value > alpha)
+                    if (value > alpha){
                         alpha = value;
+                        flag = EXACT;
+                    }
 
-                    if (value >= beta)
+                    if (value >= beta){
+                        flag = LOWER_BOUND;
                         break;
+                    }
                 }
 
                 if (!is_capture && move != best_move)
@@ -124,7 +135,7 @@ namespace Sigmoid {
             else if (move_count == 0)
                 return DRAW;
 
-            // TODO TT store.
+            tt->store(board.key(), best_move, flag, depth, best_value);
             return best_value;
         }
 
@@ -167,7 +178,7 @@ namespace Sigmoid {
             return best_value;
         }
 
-        void update_quiet_histories(Move bestMove, const std::vector<Move>& quietMoves){
+        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves){
             apply_gravity<int16_t>(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], 700);
 
             for (const Move& move: quietMoves)

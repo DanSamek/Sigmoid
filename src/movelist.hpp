@@ -12,8 +12,11 @@ namespace Sigmoid {
 
     template<bool captures>
     struct MoveList {
-        MoveList(const Board* board, const MainHistory* mainHistory) : board(board), mainHistory(mainHistory){}
-        MoveList(const Board* board) : board(board){}
+        MoveList(const Board* board,
+                 const MainHistory* mainHistory,
+                 const Move* ttMove) : board(board), mainHistory(mainHistory), ttMove(ttMove){}
+
+        MoveList(const Board* board) : board(board) {}
 
 
         Move get(){
@@ -43,13 +46,17 @@ namespace Sigmoid {
         void score_moves(){
             for (int i = 0; i < size; i++){
                 scores[i] = 0;
-                Move move = moves[i];
+                const Move& move = moves[i];
                 bool capture = board->is_capture(move);
 
-                Piece from = board->at(move.from());
-                if (capture){
-                    Piece to = move.special_type() == Move::EN_PASSANT ? PAWN : board->at(move.to());
-                    scores[i] = ((to + 1) * 10000) * (KING - from + 1);
+                if (ttMove && *ttMove == move){
+                    scores[i] = TT_MOVE_VALUE;
+                }
+                else if (capture){
+                    Piece captured_piece = move.special_type() == Move::EN_PASSANT ? PAWN : board->at(move.to());
+                    Piece from_piece = board->at(move.from());
+                    scores[i] = QUIET_OFFSET;
+                    scores[i] = ((captured_piece + 1) * 10000) * (KING - from_piece + 1);
                 }
                 else{
                     if (mainHistory)
@@ -60,6 +67,7 @@ namespace Sigmoid {
 
         const Board* board;
         const MainHistory* mainHistory = nullptr;
+        const Move* ttMove = nullptr;
 
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
 
