@@ -22,6 +22,7 @@ namespace Sigmoid {
         int searchDepth;
 
         MainHistory mainHistory;
+        KillerMoves killerMoves;
 
         Worker(Board board, TranspositionTable* tt, WorkerHelper* wh, Timer* timer ,int searchDepth) :
             board(std::move(board)), tt(tt), workerHelper(wh), timer(timer), searchDepth(searchDepth) {}
@@ -80,14 +81,16 @@ namespace Sigmoid {
 
             const bool in_check = board.in_check();
 
-            MoveList<false> ml(&board, &mainHistory, &entry.move);
-            Move move;
-            int move_count = 0;
-            Move best_move = Move::none();
-            int16_t best_value = MIN_VALUE;
+            reset_killers((stack + 1)->ply);
+
+            MoveList<false> ml(&board, &mainHistory, &entry.move, &killerMoves, stack->ply);
             std::vector<Move> quiet_moves;
 
             TTFlag flag = UPPER_BOUND;
+            Move move, best_move = Move::none();
+            int16_t best_value = MIN_VALUE;
+            int move_count = 0;
+
             while ((move = ml.get()) != Move::none()){
 
                 const bool is_capture = board.is_capture(move);
@@ -127,8 +130,11 @@ namespace Sigmoid {
                     quiet_moves.emplace_back(move);
             }
 
-            if (best_move != Move::none() && !board.is_capture(best_move))
+            if (best_move != Move::none() && !board.is_capture(best_move)) {
                 update_quiet_histories(best_move, quiet_moves);
+                if (best_value >= beta)
+                    store_killer_move(stack->ply, best_move);
+            }
 
             if (move_count == 0 && in_check)
                 return -CHECKMATE + stack->ply;
@@ -178,6 +184,15 @@ namespace Sigmoid {
             return best_value;
         }
 
+        void store_killer_move(int ply, const Move& move){
+            killerMoves[ply][1] = killerMoves[ply][0];
+            killerMoves[ply][0] = move;
+        }
+
+        void reset_killers(int ply){
+            killerMoves[ply][0] = killerMoves[ply][1] = Move::none();
+        }
+
         void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves){
             apply_gravity<int16_t>(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], 700);
 
@@ -190,6 +205,10 @@ namespace Sigmoid {
                 for (auto& from : color)
                     for (auto& to: from)
                         to = 0;
+
+            for (auto& ply: killerMoves)
+                for (auto& move: ply)
+                    move = Move::none();
         }
     };
 }

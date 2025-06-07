@@ -14,9 +14,12 @@ namespace Sigmoid {
     struct MoveList {
         MoveList(const Board* board,
                  const MainHistory* mainHistory,
-                 const Move* ttMove) : board(board), mainHistory(mainHistory), ttMove(ttMove){}
+                 const Move* ttMove,
+                 const KillerMoves* killerMoves,
+                 const int ply)
+            : board(board), mainHistory(mainHistory), ttMove(ttMove), killerMoves(killerMoves), ply(ply){}
 
-        MoveList(const Board* board) : board(board) {}
+        MoveList(const Board* board) : board(board), ply(0) {}
 
 
         Move get(){
@@ -56,10 +59,14 @@ namespace Sigmoid {
                     Piece captured_piece = move.special_type() == Move::EN_PASSANT ? PAWN : board->at(move.to());
                     Piece from_piece = board->at(move.from());
                     scores[i] = QUIET_OFFSET;
-                    scores[i] = ((captured_piece + 1) * 10000) * (KING - from_piece + 1);
+                    scores[i] += ((captured_piece + 1) * 10000) * (KING - from_piece + 1);
                 }
                 else{
-                    if (mainHistory)
+                    if (killerMoves && (*killerMoves)[ply][0] == move)
+                        scores[i] = KILLER_1_BONUS;
+                    else if(killerMoves && (*killerMoves)[ply][1] == move)
+                        scores[i] = KILLER_2_BONUS;
+                    else if (mainHistory)
                         scores[i] = (*mainHistory)[board->whoPlay][move.from()][move.to()];
                 }
             }
@@ -68,9 +75,10 @@ namespace Sigmoid {
         const Board* board;
         const MainHistory* mainHistory = nullptr;
         const Move* ttMove = nullptr;
+        const KillerMoves* killerMoves = nullptr;
+        int ply;
 
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
-
         std::array<int, MAX_POSSIBLE_MOVES> scores;
         int size = 0;
 

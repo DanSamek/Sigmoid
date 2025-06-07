@@ -30,8 +30,14 @@ namespace Sigmoid{
 
     using MainHistory = History<int16_t, NUM_COLORS, NUM_SQUARES, NUM_SQUARES>::type;
 
-    const int TT_MOVE_VALUE = 1000000;
-    const int QUIET_OFFSET = std::numeric_limits<int16_t>::max();
+    constexpr int MAX_KILLERS = 2;
+    constexpr int KILLER_1_BONUS = 100'000;
+    constexpr int KILLER_2_BONUS = 75'000;
+
+    using KillerMoves = std::array<std::array<Move, MAX_PLY_P1>, MAX_KILLERS>;
+
+    const int TT_MOVE_VALUE = 10'000'000;
+    const int QUIET_OFFSET = 1'000'000;
 }
 
 #endif //SIGMOID_HISTORY_HPP
