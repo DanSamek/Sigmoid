@@ -194,7 +194,7 @@ namespace Sigmoid {
             }
 
             if (best_move != NO_MOVE && !board.is_capture(best_move))
-                update_quiet_histories(best_move, quiet_moves);
+                update_quiet_histories(best_move, quiet_moves, depth);
 
             if (move_count == 0 && in_check)
                 return -CHECKMATE + stack->ply;
@@ -244,11 +244,13 @@ namespace Sigmoid {
             return best_value;
         }
 
-        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves){
-            apply_gravity<int16_t>(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], 700);
+        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves, int depth){
+            int bonus = std::min(depth * 50, 500);
+            int malus = std::min(depth * 25, 250);
+            apply_gravity<int16_t>(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], bonus);
 
             for (const Move& move: quietMoves)
-                apply_gravity<int16_t>(mainHistory[board.whoPlay][move.from()][move.to()], -250);
+                apply_gravity<int16_t>(mainHistory[board.whoPlay][move.from()][move.to()], -malus);
         }
 
         void prepare_for_search(){
