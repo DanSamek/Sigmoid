@@ -72,7 +72,21 @@ namespace Sigmoid {
 
             auto [entry, hit] = tt->probe(board.key());
             if (!pv_node && hit && entry.depth >= depth){
-                // TODO TT cutoffs.
+
+                auto correct_tt_eval = [&stack](int16_t eval)-> int16_t {
+                    auto abs_eval = std::abs(eval);
+                    if(abs_eval >= CHECKMATE_BOUND)
+                        eval -= stack->ply * (abs_eval/eval);
+                    return eval;
+                };
+
+                int16_t corrected_eval = correct_tt_eval(entry.eval);
+                if (entry.flag == EXACT)
+                    return corrected_eval;
+                if (entry.flag == UPPER_BOUND && entry.eval <= alpha)
+                    return corrected_eval;
+                if (entry.flag == LOWER_BOUND && entry.eval >= beta)
+                    return corrected_eval;
             }
 
             if (depth == 0)
@@ -147,7 +161,7 @@ namespace Sigmoid {
             else if (move_count == 0)
                 return DRAW;
 
-            tt->store(board.key(), best_move, flag, depth, best_value);
+            tt->store(board.key(), best_move, flag, depth, best_value, stack->ply);
             return best_value;
         }
 
