@@ -132,7 +132,17 @@ namespace Sigmoid {
             if (depth == 0)
                 return q_search(alpha, beta, stack);
 
+            const int16_t static_eval = board.eval();
             const bool in_check = board.in_check();
+
+
+            if (!in_check) {
+                // Reverse futility pruning.
+                // If eval is really good, that even with big margin beats beta, return static eval.
+                if (!pv_node && depth <= 8 && static_eval >= beta + 100 * depth)
+                    return static_eval;
+            }
+
 
             MoveList<false> ml(&board, &mainHistory, &entry.move);
             Move move;
