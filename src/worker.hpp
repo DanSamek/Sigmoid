@@ -150,6 +150,8 @@ namespace Sigmoid {
             if (best_value > alpha)
                 alpha = best_value;
 
+            // TODO tt probing.
+
             MoveList<true> ml(&board);
             Move move;
             while ((move = ml.get()) != Move::none()){
@@ -181,8 +183,8 @@ namespace Sigmoid {
         void update_quiet_histories(const Move& bestMove,
                                     const std::vector<Move>& quietMoves,
                                     const int depth){
-            int bonus = std::min(depth * 100, 1200);
-            int malus = std::min(depth * 50,  500);
+            int bonus = std::min(depth * 50, 700);
+            int malus = std::min(depth * 25, 350);
 
             apply_gravity<int16_t>(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], bonus);
 
