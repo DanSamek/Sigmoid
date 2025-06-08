@@ -110,8 +110,8 @@ namespace Sigmoid {
             if (stack->ply >= MAX_PLY)
                 return board.eval();
 
-            auto [entry, hit] = tt->probe(board.key());
-            if (!pv_node && hit && entry.depth >= depth){
+            auto [entry, tt_hit] = tt->probe(board.key());
+            if (!pv_node && tt_hit && entry.depth >= depth){
 
                 auto correct_tt_eval = [&stack](int16_t eval)-> int16_t {
                     auto abs_eval = std::abs(eval);
@@ -135,6 +135,9 @@ namespace Sigmoid {
             const int16_t static_eval = board.eval();
             const bool in_check = board.in_check();
 
+            // IIR
+            if (!tt_hit && !root_node && depth >= 7)
+                depth--;
 
             if (!in_check) {
                 // Reverse futility pruning.
