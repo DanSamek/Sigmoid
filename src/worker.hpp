@@ -45,8 +45,48 @@ namespace Sigmoid {
                 (root + i)->excludedMove = Move::none();
             }
 
+            int16_t eval;
             for (int depth = 1; depth <= searchDepth; depth++){
-                int16_t eval = negamax<ROOT>(depth, MIN_VALUE, MAX_VALUE, root);
+                if (depth <= 5){
+                    eval = negamax<ROOT>(depth, MIN_VALUE, MAX_VALUE, root);
+
+                    if (is_time_out())
+                        break;
+
+                    result.score = eval;
+                    workerHelper->enter_search_result(depth, result);
+                    continue;
+                }
+
+                int16_t delta = 20;
+                int16_t alpha = std::max(MIN_VALUE, (int16_t)(eval - delta));
+                int16_t beta = std::min(MAX_VALUE, (int16_t)(eval + delta));
+
+                while (true){
+                    eval = negamax<ROOT>(depth, alpha, beta, root);
+
+                    if (eval <= alpha && eval > -CHECKMATE_BOUND){
+                        // beta = (eval + beta) / 2; todo try, if pass.
+                        alpha -= delta;
+                    }
+                    else if (eval >= beta && eval < CHECKMATE_BOUND){
+                        // alpha = (eval + alpha) / 2; todo try, if pass.
+                        beta += delta;
+                    }
+                    else{
+                        if (!is_time_out()){
+                            result.score = eval;
+                            workerHelper->enter_search_result(depth, result);
+                        }
+                        break;
+                    }
+
+                    delta *= 2;
+                    if (delta >= 1000){
+                        alpha = MIN_VALUE;
+                        beta = MAX_VALUE;
+                    }
+                }
 
                 if (is_time_out())
                     break;
@@ -59,7 +99,7 @@ namespace Sigmoid {
         template<NodeType nodeType>
         int16_t negamax(int depth, int16_t alpha, int16_t beta, StackItem* stack) {
             constexpr bool root_node = nodeType == ROOT;
-            constexpr bool pv_node = root_node || nodeType == PV;
+            constexpr bool pv_node = nodeType != NONPV;
 
             if (is_time_out())
                 return MIN_VALUE;
