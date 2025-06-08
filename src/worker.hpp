@@ -72,7 +72,21 @@ namespace Sigmoid {
 
             auto [entry, hit] = tt->probe(board.key());
             if (!pv_node && hit && entry.depth >= depth){
-                // TODO TT cutoffs.
+
+                auto correct_tt_eval = [&stack](int16_t eval)-> int16_t {
+                    auto abs_eval = std::abs(eval);
+                    if(abs_eval >= CHECKMATE_BOUND)
+                        eval -= stack->ply * (abs_eval/eval);
+                    return eval;
+                };
+
+                int16_t corrected_eval = correct_tt_eval(entry.eval);
+                if (entry.flag == EXACT)
+                    return corrected_eval;
+                if (entry.flag == UPPER_BOUND && entry.eval <= alpha)
+                    return corrected_eval;
+                if (entry.flag == LOWER_BOUND && entry.eval >= beta)
+                    return corrected_eval;
             }
 
             if (depth == 0)
@@ -83,22 +97,34 @@ namespace Sigmoid {
             MoveList<false> ml(&board, &mainHistory, &entry.move);
             Move move;
             int move_count = 0;
-            Move best_move = Move::none();
+            Move best_move = NO_MOVE;
             int16_t best_value = MIN_VALUE;
             std::vector<Move> quiet_moves;
 
             TTFlag flag = UPPER_BOUND;
-            while ((move = ml.get()) != Move::none()){
+            while ((move = ml.get()) != NO_MOVE){
 
                 const bool is_capture = board.is_capture(move);
                 if (!board.make_move(move))
                     continue;
+                stack->currentMove = move;
 
                 move_count++;
                 result.nodesVisited++;
                 tt->prefetch(board.key());
-                int16_t value = static_cast<int16_t>(-negamax<PV>(depth - 1, -beta, -alpha, stack + 1));
 
+
+                int16_t value;
+                if (move_count == 1){
+                    value = -negamax<nodeType>(depth - 1, -beta, -alpha, stack + 1);
+                }
+                else{
+                    value = -negamax<NONPV>(depth - 1, -alpha - 1, -alpha, stack + 1);
+
+                    if (value > alpha && pv_node)
+                        value = -negamax<PV>(depth - 1, -beta, -alpha, stack + 1);
+                }
+                stack->currentMove = NO_MOVE;
                 board.undo_move();
 
                 if (is_time_out())
@@ -127,7 +153,7 @@ namespace Sigmoid {
                     quiet_moves.emplace_back(move);
             }
 
-            if (best_move != Move::none() && !board.is_capture(best_move))
+            if (best_move != NO_MOVE && !board.is_capture(best_move))
                 update_quiet_histories(best_move, quiet_moves);
 
             if (move_count == 0 && in_check)
@@ -135,7 +161,7 @@ namespace Sigmoid {
             else if (move_count == 0)
                 return DRAW;
 
-            tt->store(board.key(), best_move, flag, depth, best_value);
+            tt->store(board.key(), best_move, flag, depth, best_value, stack->ply);
             return best_value;
         }
 
@@ -152,7 +178,7 @@ namespace Sigmoid {
 
             MoveList<true> ml(&board);
             Move move;
-            while ((move = ml.get()) != Move::none()){
+            while ((move = ml.get()) != NO_MOVE){
                 if (!board.make_move(move))
                     continue;
 

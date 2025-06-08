@@ -37,9 +37,9 @@ namespace Sigmoid {
             std::fill(entries, entries + numberOfEntries, Entry{});
         }
 
-        void store(uint64_t key, const Move& move, TTFlag flag, int8_t depth, int16_t eval){
-            // TODO handle mates.
-
+        void store(uint64_t key, const Move& move, TTFlag flag, int8_t depth, int16_t eval, int16_t ply){
+            if (eval >= CHECKMATE_BOUND) eval += ply;
+            else if (eval <= -CHECKMATE_BOUND) eval -= ply;
             const int index = get_index(key);
             // For now always replace.
             entries[index] = {key, move, flag, depth, eval};
