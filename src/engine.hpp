@@ -14,8 +14,8 @@ namespace Sigmoid {
     struct Engine {
         struct Options {
             int depth = MAX_PLY - 1;
-            int wTime, bTime;
-            int wInc, bInc;
+            int64_t wTime = 0, bTime = 0;
+            int64_t wInc = 0, bInc = 0;
 
             int threadCnt = 1;
             TranspositionTable* tt = nullptr;
@@ -31,7 +31,7 @@ namespace Sigmoid {
         };
 
         void start_searching(Options& options){
-            Timer timer(options.wTime, options.wInc, options.bTime, options.bInc, options.board.whoPlay);
+            Timer timer(options.wTime, options.bTime, options.wInc, options.bInc, options.board.whoPlay);
             WorkerHelper worker_helper(options.threadCnt, options.datagen, &timer);
             std::vector<std::thread> search_threads;
             std::vector<Worker> workers;
