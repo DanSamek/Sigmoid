@@ -85,6 +85,8 @@ namespace Sigmoid{
     private:
         static inline constexpr int SQ_MASK = 0x3F;
     };
+
+    static inline const Move NO_MOVE = Move::none();
 }
 
 #endif //SIGMOID_MOVE_HPP
