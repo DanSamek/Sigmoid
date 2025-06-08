@@ -7,14 +7,19 @@
 #include "constants.hpp"
 #include "movegen.hpp"
 #include "history.hpp"
+#include "search.hpp"
 
 namespace Sigmoid {
 
     template<bool captures>
     struct MoveList {
         MoveList(const Board* board,
-                 const MainHistory* mainHistory,
-                 const Move* ttMove) : board(board), mainHistory(mainHistory), ttMove(ttMove){}
+                 const MainHistory::type* mainHistory,
+                 const Move* ttMove,
+                 const ContinuationHistory* continuationHistory,
+                 const StackItem* stack)
+                :  board(board), mainHistory(mainHistory), ttMove(ttMove),
+                   continuationHistory(continuationHistory),stack(stack){}
 
         MoveList(const Board* board) : board(board) {}
 
@@ -59,18 +64,35 @@ namespace Sigmoid {
                     scores[i] = ((captured_piece + 1) * 10000) * (KING - from_piece + 1);
                 }
                 else{
-                    if (mainHistory)
+                    if (mainHistory) {
                         scores[i] = (*mainHistory)[board->whoPlay][move.from()][move.to()];
+
+                        auto get_cont_ply_hist = [&]()->int{
+                            int cont_ply_hist_score = 0;
+                            for (int n_ply = 1; n_ply <= CONT_HIST_MAX_PLY; n_ply++){
+                                const Move& previous_move = (stack - n_ply)->currentMove;
+                                if (previous_move == NO_MOVE)
+                                    break;
+
+                                int16_t entry = (*continuationHistory)[n_ply - 1][previous_move.from()][previous_move.to()][move.from()][move.to()];
+                                cont_ply_hist_score += entry;
+                            }
+                            return cont_ply_hist_score;
+                        };
+                        scores[i] += get_cont_ply_hist();
+                    }
                 }
             }
         }
 
         const Board* board;
-        const MainHistory* mainHistory = nullptr;
+        const MainHistory::type* mainHistory = nullptr;
         const Move* ttMove = nullptr;
+        const ContinuationHistory* continuationHistory = nullptr;
+        const StackItem* stack = nullptr;
+
 
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
-
         std::array<int, MAX_POSSIBLE_MOVES> scores;
         int size = 0;
 
