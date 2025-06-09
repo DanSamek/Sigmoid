@@ -161,6 +161,15 @@ namespace Sigmoid {
             while ((move = ml.get()) != NO_MOVE){
 
                 const bool is_capture = board.is_capture(move);
+
+                // Futility pruning.
+                // If current eval is bad, we don't expect that quiet move will help us in this position,
+                // so we can skip it.
+                if (!pv_node && move_count && !is_capture && !in_check
+                    && static_eval + 110 * depth <= alpha && depth <= 8)
+                    continue;
+
+
                 if (!board.make_move(move))
                     continue;
                 stack->currentMove = move;
