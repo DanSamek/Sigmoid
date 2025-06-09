@@ -33,14 +33,17 @@ namespace Sigmoid {
             if (size <= 0)
                 return Move::none();
 
-            for (int i = 0; i < size - 1; i++){
-                if (scores[i] > scores[i + 1]){
-                    std::swap(scores[i], scores[i + 1]);
-                    std::swap(moves[i], moves[i + 1]);
-                }
-            }
+            int best_move_idx = 0;
+            for (int i = 1; i < size; ++i)
+                if (scores[i] > scores[best_move_idx])
+                    best_move_idx = i;
 
-            return moves[--size];
+            Move best_move = moves[best_move_idx];
+            scores[best_move_idx] = scores[size - 1];
+            moves[best_move_idx] = moves[size - 1];
+            size--;
+
+            return best_move;
         }
 
         void score_moves(){
