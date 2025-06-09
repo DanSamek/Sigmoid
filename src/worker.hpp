@@ -23,8 +23,19 @@ namespace Sigmoid {
 
         MainHistory mainHistory;
 
-        Worker(Board board, TranspositionTable* tt, WorkerHelper* wh, Timer* timer ,int searchDepth) :
-            board(std::move(board)), tt(tt), workerHelper(wh), timer(timer), searchDepth(searchDepth) {}
+        // Called before every search.
+        void load_state(Board b, TranspositionTable* t, WorkerHelper* wh, Timer* tm, int sd){
+            board = std::move(b);
+            tt = t;
+            workerHelper = wh;
+            timer = tm;
+            searchDepth = sd;
+            result = SearchResult();
+        }
+
+        void new_game(){
+            prepare_for_search();
+        }
 
         bool is_time_out() {
             if (searchDepth != MAX_PLY - 1)
@@ -34,7 +45,6 @@ namespace Sigmoid {
         }
 
         void iterative_deepening() {
-            prepare_for_search();
 
             StackItem stack[MAX_PLY + 1];
             StackItem* root = stack + 1;
@@ -90,9 +100,6 @@ namespace Sigmoid {
 
                 if (is_time_out())
                     break;
-
-                result.score = eval;
-                workerHelper->enter_search_result(depth, result);
             }
         }
 
@@ -110,8 +117,8 @@ namespace Sigmoid {
             if (stack->ply >= MAX_PLY)
                 return board.eval();
 
-            auto [entry, hit] = tt->probe(board.key());
-            if (!pv_node && hit && entry.depth >= depth){
+            auto [entry, tt_hit] = tt->probe(board.key());
+            if (!pv_node && tt_hit && entry.depth >= depth){
 
                 auto correct_tt_eval = [&stack](int16_t eval)-> int16_t {
                     auto abs_eval = std::abs(eval);
@@ -129,12 +136,11 @@ namespace Sigmoid {
                     return corrected_eval;
             }
 
-            if (depth == 0)
+            if (depth <= 0)
                 return q_search(alpha, beta, stack);
 
             const int16_t static_eval = board.eval();
             const bool in_check = board.in_check();
-
 
             if (!in_check) {
                 // Reverse futility pruning.

@@ -12,12 +12,13 @@
 namespace Sigmoid {
 
     struct Engine {
+        std::vector<Worker> workers;
+
         struct Options {
             int depth = MAX_PLY - 1;
             int64_t wTime = 0, bTime = 0;
             int64_t wInc = 0, bInc = 0;
 
-            int threadCnt = 1;
             TranspositionTable* tt = nullptr;
             Board board;
 
@@ -32,12 +33,11 @@ namespace Sigmoid {
 
         void start_searching(Options& options){
             Timer timer(options.wTime, options.bTime, options.wInc, options.bInc, options.board.whoPlay);
-            WorkerHelper worker_helper(options.threadCnt, options.datagen, &timer);
+            WorkerHelper worker_helper(workers.size(), options.datagen, &timer);
             std::vector<std::thread> search_threads;
-            std::vector<Worker> workers;
 
-            for (int i = 0; i < options.threadCnt; ++i) {
-                workers.emplace_back(options.board, options.tt, &worker_helper, &timer, options.depth);
+            for (size_t i = 0; i < workers.size(); ++i) {
+                workers[i].load_state(options.board, options.tt, &worker_helper, &timer, options.depth);
                 search_threads.emplace_back(&Worker::iterative_deepening, &workers[i]);
             }
 
@@ -48,6 +48,13 @@ namespace Sigmoid {
             options.totalNodesVisited = worker_helper.totalNodesVisited;
             if (!options.datagen)
                 std::cout << "bestmove " << worker_helper.bestResult.bestMove.to_uci() << std::endl;
+        }
+
+        void new_game(int threadCnt){
+            workers = std::vector<Worker>(threadCnt);
+
+            for (Worker& worker: workers)
+                worker.new_game();
         }
     };
 }
