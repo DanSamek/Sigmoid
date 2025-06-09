@@ -4,6 +4,8 @@
 #include "move.hpp"
 
 namespace Sigmoid {
+    constexpr int16_t RED_BASE = 256;
+
     enum NodeType{
         ROOT,
         PV,

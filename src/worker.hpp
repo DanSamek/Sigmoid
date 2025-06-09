@@ -22,6 +22,9 @@ namespace Sigmoid {
         int searchDepth;
 
         MainHistory mainHistory;
+        static inline bool loaded = false;
+        std::array<std::array<int16_t, MAX_POSSIBLE_MOVES>, MAX_PLY> lmrTable;
+
 
         // Called before every search.
         void load_state(Board b, TranspositionTable* t, WorkerHelper* wh, Timer* tm, int sd){
@@ -163,19 +166,29 @@ namespace Sigmoid {
                 const bool is_capture = board.is_capture(move);
                 if (!board.make_move(move))
                     continue;
-                stack->currentMove = move;
 
-                move_count++;
-                result.nodesVisited++;
+                stack->currentMove = move;
+                move_count++; result.nodesVisited++;
+
                 tt->prefetch(board.key());
 
-
                 int16_t value;
-                if (move_count == 1){
+                int16_t reduction = 0;
+
+                // LMR
+                if (depth > 2 && !root_node){
+                    reduction = lmrTable[depth - 1][move_count - 1];
+                    reduction = std::clamp(reduction / RED_BASE, 0, depth - 2);
+                }
+
+                if (move_count == 1 && pv_node){
                     value = -negamax<nodeType>(depth - 1, -beta, -alpha, stack + 1);
                 }
                 else{
-                    value = -negamax<NONPV>(depth - 1, -alpha - 1, -alpha, stack + 1);
+                    value = -negamax<NONPV>(depth - 1 - reduction, -alpha - 1, -alpha, stack + 1);
+
+                    if (reduction && value > alpha)
+                        value = -negamax<NONPV>(depth - 1, -alpha - 1, -alpha, stack + 1);
 
                     if (value > alpha && pv_node)
                         value = -negamax<PV>(depth - 1, -beta, -alpha, stack + 1);
@@ -272,6 +285,15 @@ namespace Sigmoid {
                 for (auto& from : color)
                     for (auto& to: from)
                         to = 0;
+
+
+            if (loaded) return;
+
+            for (int depth = 1; depth <= MAX_PLY; depth++)
+                for (int move_count = 1; move_count <= MAX_POSSIBLE_MOVES; move_count++)
+                    lmrTable[depth - 1][move_count - 1] = int(0.5 + log(depth) * log(move_count) * 0.3) * RED_BASE;
+
+            loaded = true;
         }
     };
 }
