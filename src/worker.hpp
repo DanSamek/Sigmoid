@@ -22,6 +22,7 @@ namespace Sigmoid {
         int searchDepth;
 
         MainHistory mainHistory;
+        KillerMoves killerMoves;
 
         // Called before every search.
         void load_state(Board b, TranspositionTable* t, WorkerHelper* wh, Timer* tm, int sd){
@@ -149,8 +150,7 @@ namespace Sigmoid {
                     return static_eval;
             }
 
-
-            MoveList<false> ml(&board, &mainHistory, &entry.move);
+            MoveList<false> ml(&board, &mainHistory, &entry.move, &killerMoves, stack->ply);
             Move move;
             int move_count = 0;
             Move best_move = NO_MOVE;
@@ -217,8 +217,11 @@ namespace Sigmoid {
                     quiet_moves.emplace_back(move);
             }
 
-            if (best_move != NO_MOVE && !board.is_capture(best_move))
+            if (best_move != NO_MOVE && !board.is_capture(best_move)) {
                 update_quiet_histories(best_move, quiet_moves);
+                if (best_value >= beta)
+                    add_killer_move(best_move, stack->ply);
+            }
 
             if (move_count == 0 && in_check)
                 return -CHECKMATE + stack->ply;
@@ -275,11 +278,20 @@ namespace Sigmoid {
                 apply_gravity<int16_t>(mainHistory[board.whoPlay][move.from()][move.to()], -250);
         }
 
+        void add_killer_move(const Move& move, int ply){
+            killerMoves[ply][1] = killerMoves[ply][0];
+            killerMoves[ply][0] = move;
+        }
+
         void prepare_for_search(){
             for (auto& color : mainHistory)
                 for (auto& from : color)
                     for (auto& to: from)
                         to = 0;
+
+            for (auto& ply : killerMoves)
+                for (auto& move : ply)
+                    move = Move::none();
         }
     };
 }

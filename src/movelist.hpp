@@ -14,7 +14,10 @@ namespace Sigmoid {
     struct MoveList {
         MoveList(const Board* board,
                  const MainHistory* mainHistory,
-                 const Move* ttMove) : board(board), mainHistory(mainHistory), ttMove(ttMove){}
+                 const Move* ttMove,
+                 const KillerMoves* killerMoves,
+                 const int ply)
+             : board(board), mainHistory(mainHistory), ttMove(ttMove), killerMoves(killerMoves), ply(ply){}
 
         MoveList(const Board* board) : board(board) {}
 
@@ -59,8 +62,16 @@ namespace Sigmoid {
                     scores[i] += ((captured_piece + 1) * 10000) * (KING - from_piece + 1);
                 }
                 else{
-                    if (mainHistory)
-                        scores[i] = (*mainHistory)[board->whoPlay][move.from()][move.to()];
+                    if (!mainHistory) continue;
+
+                    scores[i] = (*mainHistory)[board->whoPlay][move.from()][move.to()];
+
+                    if (move == (*killerMoves)[ply][1])
+                        scores[i] = KILLER_2_VALUE;
+
+                    if (move == (*killerMoves)[ply][0])
+                        scores[i] = KILLER_1_VALUE;
+
                 }
             }
         }
@@ -68,9 +79,10 @@ namespace Sigmoid {
         const Board* board;
         const MainHistory* mainHistory = nullptr;
         const Move* ttMove = nullptr;
+        const KillerMoves* killerMoves = nullptr;
+        int ply = 0;
 
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
-
         std::array<int, MAX_POSSIBLE_MOVES> scores;
         int size = 0;
 
