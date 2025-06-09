@@ -62,7 +62,7 @@ namespace Sigmoid {
                     Piece captured_piece = move.special_type() == Move::EN_PASSANT ? PAWN : board->at(move.to());
                     Piece from_piece = board->at(move.from());
                     scores[i] = QUIET_OFFSET;
-                    scores[i] = ((captured_piece + 1) * 10000) * (KING - from_piece + 1);
+                    scores[i] += ((captured_piece + 1) * 10000) * (KING - from_piece + 1);
                 }
                 else{
                     if (!mainHistory)

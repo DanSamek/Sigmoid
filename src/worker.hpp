@@ -284,7 +284,7 @@ namespace Sigmoid {
             for (int n_ply = 1; n_ply <= CONT_HIST_MAX_PLY; n_ply++){
                 const Move& previous_move = (stack - n_ply)->currentMove;
                 if (previous_move == NO_MOVE)
-                    break;  
+                    break;
 
                 int16_t& entry = continuationHistory[n_ply - 1][previous_move.from()][previous_move.to()][move.from()][move.to()];
                 apply_gravity<int16_t>(entry, bonus, ContinuationHistoryEntry::maxValue);
