@@ -58,10 +58,12 @@ struct Bencher{
         tt.resize(16);
         Board b;
 
+        // To make bench speed relative to in-game speed.
+        Engine e;
+        e.new_game(1);
+
         for (const std::string& position : positions){
             b.load_from_fen(position);
-            Engine e;
-            e.new_game(1);
 
             Engine::Options ops;
                 ops.board = b;
