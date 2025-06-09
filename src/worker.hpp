@@ -197,7 +197,9 @@ namespace Sigmoid {
 
                 if (value > best_value) {
                     best_value = value;
-                    result.bestMove = move;
+
+                    if constexpr (root_node)
+                        result.bestMove = move;
 
                     if (value > alpha){
                         best_move = move;
