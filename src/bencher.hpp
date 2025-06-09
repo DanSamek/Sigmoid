@@ -57,12 +57,14 @@ struct Bencher{
         TranspositionTable tt;
         tt.resize(16);
         Board b;
+
         for (const std::string& position : positions){
             b.load_from_fen(position);
             Engine e;
+            e.new_game(1);
+
             Engine::Options ops;
                 ops.board = b;
-                ops.threadCnt = 1;
                 ops.depth = BENCH_DEPTH;
                 ops.tt = &tt;
             e.start_searching(ops);

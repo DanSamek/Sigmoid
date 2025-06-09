@@ -24,6 +24,8 @@ namespace Sigmoid{
         Uci() {
             tt = TranspositionTable();
             tt.resize(ttSize);
+            board.load_from_fen(START_POS);
+            engine.new_game(threadCnt);
         }
 
         void loop(){
@@ -57,10 +59,11 @@ namespace Sigmoid{
 
             if(type == "Hash"){
                 ttSize = std::stoi(value);
-                init_tt();
+                tt.resize(ttSize);
             }
             if (type == "Threads") {
                 threadCnt = std::stoi(value);
+                engine.new_game(threadCnt);
             }
         }
 
@@ -81,7 +84,6 @@ namespace Sigmoid{
 
             options.board = board;
             options.tt = &tt;
-            options.threadCnt = threadCnt;
             engine.start_searching(options);
         }
 
@@ -144,10 +146,7 @@ namespace Sigmoid{
         void command_uci_new_game(){
             board.load_from_fen(START_POS);
             tt.resize(ttSize);
-        }
-
-        void init_tt(){
-            tt.resize(ttSize);
+            engine.new_game(threadCnt);
         }
     };
 }
