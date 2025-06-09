@@ -66,10 +66,7 @@ namespace Sigmoid {
 
                     scores[i] = (*mainHistory)[board->whoPlay][move.from()][move.to()];
 
-                    if (move == (*killerMoves)[ply][1])
-                        scores[i] = KILLER_2_VALUE;
-
-                    if (move == (*killerMoves)[ply][0])
+                    if (move == (*killerMoves)[ply])
                         scores[i] = KILLER_1_VALUE;
 
                 }

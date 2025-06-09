@@ -150,6 +150,8 @@ namespace Sigmoid {
                     return static_eval;
             }
 
+            killerMoves[stack->ply + 1] = Move::none();
+
             MoveList<false> ml(&board, &mainHistory, &entry.move, &killerMoves, stack->ply);
             Move move;
             int move_count = 0;
@@ -279,8 +281,7 @@ namespace Sigmoid {
         }
 
         void add_killer_move(const Move& move, int ply){
-            killerMoves[ply][1] = killerMoves[ply][0];
-            killerMoves[ply][0] = move;
+            killerMoves[ply] = move;
         }
 
         void prepare_for_search(){
@@ -290,8 +291,7 @@ namespace Sigmoid {
                         to = 0;
 
             for (auto& ply : killerMoves)
-                for (auto& move : ply)
-                    move = Move::none();
+                ply = Move::none();
         }
     };
 }
