@@ -197,9 +197,10 @@ namespace Sigmoid {
 
                 if (value > best_value) {
                     best_value = value;
+                    result.bestMove = move;
 
                     if (value > alpha){
-                        result.bestMove = best_move = move;
+                        best_move = move;
                         alpha = value;
                         flag = EXACT;
                     }
