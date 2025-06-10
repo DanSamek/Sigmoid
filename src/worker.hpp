@@ -125,6 +125,8 @@ namespace Sigmoid {
                 return board.eval();
 
             auto [entry, tt_hit] = tt->probe(board.key());
+            const bool tt_capture = tt_hit && board.is_capture(entry.move);
+
             if (!pv_node && tt_hit && entry.depth >= depth){
 
                 auto correct_tt_eval = [&stack](int16_t eval)-> int16_t {
@@ -211,6 +213,9 @@ namespace Sigmoid {
 
                     if (pv_node)
                         reduction -= 128;
+
+                    if (!is_capture && tt_capture)
+                        reduction += 64;
 
                     reduction /= 128; // Scaling to a depth.
                     reduction = std::clamp((int)reduction, 0, depth - 2);
