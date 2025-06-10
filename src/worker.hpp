@@ -122,7 +122,7 @@ namespace Sigmoid {
             if (result.nodesVisited & 2048 && is_time_out())
                 return MIN_VALUE;
 
-            if (board.is_draw())
+            if (!root_node && board.is_draw())
                 return DRAW;
 
             if (stack->ply >= MAX_PLY)
