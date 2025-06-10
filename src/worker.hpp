@@ -146,6 +146,10 @@ namespace Sigmoid {
             const int16_t static_eval = board.eval();
             const bool in_check = board.in_check();
 
+            // Internal iterative reductions (IIR)
+            if (!tt_hit && depth >= 5 && pv_node && !root_node)
+                depth--;
+
             if (!in_check) {
                 // Reverse futility pruning.
                 // If eval is really good, that even with big margin beats beta, return static eval.
