@@ -244,6 +244,10 @@ namespace Sigmoid {
 
                     if (value >= beta){
                         flag = LOWER_BOUND;
+
+                        if (!is_capture)
+                            update_quiet_histories(best_move, quiet_moves);
+
                         break;
                     }
                 }
@@ -251,9 +255,6 @@ namespace Sigmoid {
                 if (!is_capture && move != best_move)
                     quiet_moves.emplace_back(move);
             }
-
-            if (best_move != NO_MOVE && !board.is_capture(best_move))
-                update_quiet_histories(best_move, quiet_moves);
 
             if (move_count == 0 && in_check)
                 return -CHECKMATE + stack->ply;
