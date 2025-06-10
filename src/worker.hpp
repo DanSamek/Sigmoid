@@ -208,6 +208,9 @@ namespace Sigmoid {
                 if (depth >= 3 && !root_node){
                     reduction = lmrTable[depth - 1][move_count - 1];
 
+                    if (pv_node)
+                        reduction -= 128;
+
                     reduction /= 128; // Scaling to a depth.
                     reduction = std::clamp((int)reduction, 0, depth - 2);
                 }
