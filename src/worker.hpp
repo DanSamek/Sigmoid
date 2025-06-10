@@ -146,7 +146,7 @@ namespace Sigmoid {
             }
 
             if (depth <= 0)
-                return q_search(alpha, beta, stack);
+                return q_search<nodeType>(alpha, beta, stack);
 
             stack->can_null = (stack - 1)->can_null;
             const int16_t static_eval = board.eval();
@@ -273,12 +273,32 @@ namespace Sigmoid {
             return best_value;
         }
 
-        //template<NodeType nodeType>
+        template<NodeType nodeType>
         int16_t q_search(int16_t alpha, int16_t beta, StackItem* stack) {
-            int16_t best_value = board.eval();
-            if (stack->ply >= MAX_PLY)
-                return best_value;
+            constexpr bool pv_node = nodeType != NONPV;
 
+            if (stack->ply >= MAX_PLY)
+                return board.eval();
+
+            auto [entry, tt_hit] = tt->probe(board.key());
+            if (!pv_node && tt_hit){
+                auto correct_tt_eval = [&stack](int16_t eval)-> int16_t {
+                    auto abs_eval = std::abs(eval);
+                    if(abs_eval >= CHECKMATE_BOUND)
+                        eval -= stack->ply * (abs_eval/eval);
+                    return eval;
+                };
+
+                int16_t corrected_eval = correct_tt_eval(entry.eval);
+                if (entry.flag == EXACT)
+                    return corrected_eval;
+                if (entry.flag == UPPER_BOUND && entry.eval <= alpha)
+                    return corrected_eval;
+                if (entry.flag == LOWER_BOUND && entry.eval >= beta)
+                    return corrected_eval;
+            }
+
+            int16_t best_value = board.eval();
             if (best_value >= beta)
                 return best_value;
             if (best_value > alpha)
@@ -288,13 +308,15 @@ namespace Sigmoid {
                 return MIN_VALUE;
 
             MoveList<true> ml(&board);
-            Move move;
+            Move move, best_move;
+            TTFlag flag = UPPER_BOUND;
+
             while ((move = ml.get()) != NO_MOVE){
                 if (!board.make_move(move))
                     continue;
 
                 result.nodesVisited++;
-                int16_t value = static_cast<int16_t>(-q_search(-beta, -alpha, stack + 1));
+                int16_t value = static_cast<int16_t>(-q_search<nodeType>(-beta, -alpha, stack + 1));
 
                 board.undo_move();
 
@@ -303,15 +325,21 @@ namespace Sigmoid {
 
                 if (value > best_value) {
                     best_value = value;
+                    best_move = move;
 
-                    if (value > alpha)
+                    if (value > alpha) {
+                        flag = EXACT;
                         alpha = value;
+                    }
 
-                    if (value >= beta)
+                    if (value >= beta) {
+                        flag = LOWER_BOUND;
                         break;
+                    }
                 }
             }
 
+            tt->store(board.key(), best_move, flag, 0, best_value, stack->ply);
             return best_value;
         }
 
