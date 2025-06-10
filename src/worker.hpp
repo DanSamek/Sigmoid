@@ -46,6 +46,7 @@ namespace Sigmoid {
         }
 
         void iterative_deepening() {
+            prepare_for_search_run();
 
             StackItem stack[MAX_PLY + 1];
             StackItem* root = stack + 1;
@@ -306,12 +307,17 @@ namespace Sigmoid {
                 apply_gravity<int16_t>(mainHistory[board.whoPlay][move.from()][move.to()], -250);
         }
 
+
+        // Called when on new game -- ucinewgame.
         void prepare_for_search(){
             for (auto& color : mainHistory)
                 for (auto& from : color)
                     for (auto& to: from)
                         to = 0;
+        }
 
+        // Called before every aspiration window run.
+        void prepare_for_search_run(){
             for (auto& ply : killerMoves)
                 for (auto& move : ply)
                     move = NO_MOVE;
