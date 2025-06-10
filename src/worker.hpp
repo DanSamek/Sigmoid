@@ -70,6 +70,7 @@ namespace Sigmoid {
 
                     result.score = eval;
                     workerHelper->enter_search_result(depth, result);
+
                     continue;
                 }
 
@@ -114,10 +115,10 @@ namespace Sigmoid {
             constexpr bool pv_node = nodeType != NONPV;
             result.nodesVisited++;
 
-            if (is_time_out())
+            if (result.nodesVisited & 2048 && is_time_out())
                 return MIN_VALUE;
 
-            if (board.is_draw())
+            if (!root_node && board.is_draw())
                 return DRAW;
 
             if (stack->ply >= MAX_PLY)
@@ -274,6 +275,9 @@ namespace Sigmoid {
                 return best_value;
             if (best_value > alpha)
                 alpha = best_value;
+
+            if (result.nodesVisited & 2048 && is_time_out())
+                return MIN_VALUE;
 
             MoveList<true> ml(&board);
             Move move;
