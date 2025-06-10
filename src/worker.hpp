@@ -112,6 +112,7 @@ namespace Sigmoid {
         int16_t negamax(int depth, int16_t alpha, int16_t beta, StackItem* stack) {
             constexpr bool root_node = nodeType == ROOT;
             constexpr bool pv_node = nodeType != NONPV;
+            result.nodesVisited++;
 
             if (is_time_out())
                 return MIN_VALUE;
@@ -200,7 +201,6 @@ namespace Sigmoid {
                 stack->currentMove = move;
 
                 move_count++;
-                result.nodesVisited++;
                 tt->prefetch(board.key());
 
                 int16_t value;

@@ -46,7 +46,7 @@ struct Bencher{
             "2rqr1k1/1p3p1p/p2p2p1/P1nPb3/2B1P3/5P2/1PQ2NPP/R1R4K w - - 3 25",
     };
 
-    static inline constexpr int BENCH_DEPTH = 5;
+    static inline constexpr int BENCH_DEPTH = 10;
     static void bench(){
         Zobrist::init();
         Movegen::init();
