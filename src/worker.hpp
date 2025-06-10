@@ -65,15 +65,11 @@ namespace Sigmoid {
                 if (depth <= 5){
                     eval = negamax<ROOT>(depth, MIN_VALUE, MAX_VALUE, root);
 
-                    // If depth > 2, we have at least some legal move to play.
-                    if (is_time_out() && depth != 1)
+                    if (is_time_out())
                         break;
 
                     result.score = eval;
                     workerHelper->enter_search_result(depth, result);
-
-                    if (is_time_out())
-                        break;
 
                     continue;
                 }
