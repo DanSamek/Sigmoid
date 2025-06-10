@@ -239,7 +239,7 @@ namespace Sigmoid {
                     quiet_moves.emplace_back(move);
             }
 
-            if (best_move != NO_MOVE && !board.is_capture(best_move))
+            if (best_move != NO_MOVE && !board.is_capture(best_move) && best_value >= beta)
                 update_quiet_histories(best_move, quiet_moves);
 
             if (move_count == 0 && in_check)
