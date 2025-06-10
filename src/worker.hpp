@@ -22,6 +22,7 @@ namespace Sigmoid {
         int searchDepth;
 
         MainHistory mainHistory;
+        KillerMoves killerMoves;
 
         // Called before every search.
         void load_state(Board b, TranspositionTable* t, WorkerHelper* wh, Timer* tm, int sd){
@@ -172,7 +173,7 @@ namespace Sigmoid {
             }
 
 
-            MoveList<false> ml(&board, &mainHistory, &entry.move);
+            MoveList<false> ml(&board, &mainHistory, &entry.move, &killerMoves[stack->ply]);
             Move move;
             int move_count = 0;
             Move best_move = NO_MOVE;
@@ -239,8 +240,11 @@ namespace Sigmoid {
                     quiet_moves.emplace_back(move);
             }
 
-            if (best_move != NO_MOVE && !board.is_capture(best_move))
+            if (best_move != NO_MOVE && !board.is_capture(best_move)){
                 update_quiet_histories(best_move, quiet_moves);
+                if (best_value >= beta)
+                    add_killer_move(stack->ply, best_move);
+            }
 
             if (move_count == 0 && in_check)
                 return -CHECKMATE + stack->ply;
@@ -290,6 +294,11 @@ namespace Sigmoid {
             return best_value;
         }
 
+        void add_killer_move(const int ply, const Move& move){
+            killerMoves[ply][1] = killerMoves[ply][0];
+            killerMoves[ply][0] = move;
+        }
+
         void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves){
             apply_gravity<int16_t>(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], 700);
 
@@ -302,6 +311,10 @@ namespace Sigmoid {
                 for (auto& from : color)
                     for (auto& to: from)
                         to = 0;
+
+            for (auto& ply : killerMoves)
+                for (auto& move : ply)
+                    move = NO_MOVE;
         }
     };
 }
