@@ -65,11 +65,16 @@ namespace Sigmoid {
                 if (depth <= 5){
                     eval = negamax<ROOT>(depth, MIN_VALUE, MAX_VALUE, root);
 
-                    if (is_time_out())
+                    // If depth > 2, we have at least some legal move to play.
+                    if (is_time_out() && depth != 1)
                         break;
 
                     result.score = eval;
                     workerHelper->enter_search_result(depth, result);
+
+                    if (is_time_out())
+                        break;
+
                     continue;
                 }
 
@@ -114,7 +119,7 @@ namespace Sigmoid {
             constexpr bool pv_node = nodeType != NONPV;
             result.nodesVisited++;
 
-            if (is_time_out())
+            if (result.nodesVisited & 2048 && is_time_out())
                 return MIN_VALUE;
 
             if (board.is_draw())
@@ -274,6 +279,9 @@ namespace Sigmoid {
                 return best_value;
             if (best_value > alpha)
                 alpha = best_value;
+
+            if (result.nodesVisited & 2048 && is_time_out())
+                return MIN_VALUE;
 
             MoveList<true> ml(&board);
             Move move;
