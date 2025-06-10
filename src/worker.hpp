@@ -53,7 +53,10 @@ namespace Sigmoid {
                 (root + i)->ply = i;
                 (root + i)->currentMove = Move::none();
                 (root + i)->excludedMove = Move::none();
+                (root + i)->can_null = true;
             }
+
+            (root - 1)->can_null = true;
 
             int16_t eval;
             for (int depth = 1; depth <= searchDepth; depth++){
@@ -139,6 +142,7 @@ namespace Sigmoid {
             if (depth <= 0)
                 return q_search(alpha, beta, stack);
 
+            stack->can_null = (stack - 1)->can_null;
             const int16_t static_eval = board.eval();
             const bool in_check = board.in_check();
 
@@ -147,6 +151,24 @@ namespace Sigmoid {
                 // If eval is really good, that even with big margin beats beta, return static eval.
                 if (!pv_node && depth <= 8 && static_eval >= beta + 100 * depth)
                     return static_eval;
+
+                // Null move pruning.
+                const bool some_piece = board.some_big_piece();
+                if (!pv_node && depth >= 3 && stack->can_null && some_piece
+                    && static_eval >= beta + 50 * depth){
+
+                    int16_t reduction = 3 + depth / 3;
+                    int16_t nmp_depth = std::max(depth - reduction, 1);
+
+                    stack->can_null = false;
+                    board.make_null_move();
+                    const int16_t value = -negamax<NONPV>(nmp_depth, -beta, -beta + 1, stack + 1);
+                    board.undo_null_move();
+                    stack->can_null = true;
+
+                    if (value >= beta)
+                        return value;
+                }
             }
 
 

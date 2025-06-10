@@ -168,6 +168,34 @@ namespace Sigmoid {
             nnue.pop();
         }
 
+        void make_null_move(){
+            State new_state = currentState;
+            new_state.zobristKey ^= Zobrist::sideToMove;
+
+            if (currentState.enPassantSquare != NO_SQUARE)
+                new_state.zobristKey ^= Zobrist::epSquares[currentState.enPassantSquare];
+
+            whoPlay = ~whoPlay;
+            stateStack[ply] = currentState;
+            currentState = new_state;
+
+            ply++;
+        }
+
+        void undo_null_move(){
+            ply--;
+            currentState = stateStack[ply];
+            whoPlay = ~whoPlay;
+        }
+
+        bool some_big_piece(){
+            for(int pc = KNIGHT; pc <= QUEEN; pc++)
+                if (currentState.bitboards[pc].get<WHITE>() || currentState.bitboards[pc].get<BLACK>())
+                    return true;
+
+            return false;
+        }
+
         bool in_check() {
             uint64_t king_bb;
             king_bb = whoPlay == BLACK ?
