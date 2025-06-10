@@ -308,7 +308,7 @@ namespace Sigmoid {
                 return MIN_VALUE;
 
             MoveList<true> ml(&board);
-            Move move, best_move;
+            Move move, best_move = NO_MOVE;
             TTFlag flag = UPPER_BOUND;
 
             while ((move = ml.get()) != NO_MOVE){
@@ -339,7 +339,9 @@ namespace Sigmoid {
                 }
             }
 
-            tt->store(board.key(), best_move, flag, 0, best_value, stack->ply);
+            if (best_move != NO_MOVE)
+                tt->store(board.key(), best_move, flag, 0, best_value, stack->ply);
+
             return best_value;
         }
 
