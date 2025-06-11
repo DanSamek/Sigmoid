@@ -255,8 +255,9 @@ namespace Sigmoid {
                         flag = LOWER_BOUND;
 
                         if (!is_capture) {
-                            update_continuation_histories(stack, best_move, quiet_moves, depth);
-                            update_quiet_histories(best_move, quiet_moves, depth);
+                            const int bonus = std::min(110 * depth, 1650);
+                            update_continuation_histories(stack, best_move, quiet_moves, bonus);
+                            update_quiet_histories(best_move, quiet_moves, bonus);
                         }
 
                         break;
@@ -318,8 +319,7 @@ namespace Sigmoid {
             return best_value;
         }
 
-        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
-            int bonus = std::min(150 * depth, 1650);
+        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves, const int bonus){
             apply_gravity(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], bonus, MainHistory::maxValue);
 
             for (const Move& move: quietMoves)
@@ -330,9 +330,7 @@ namespace Sigmoid {
         void update_continuation_histories(const StackItem* stack,
                                            const Move& bestMove,
                                            const std::vector<Move>& quietMoves,
-                                           const int depth){
-
-            int bonus = std::min(110 * depth, 1650);
+                                           const int bonus){
             update_continuation_histories_move(stack, bestMove, bonus, board.at(bestMove.from()));
 
             for (const Move& move : quietMoves)
