@@ -59,6 +59,10 @@ namespace Sigmoid{
             return tmp < 3 ? Piece::NONE : Piece(tmp - 2);
         }
 
+        [[nodiscard]] bool is_promotion() const{
+            return promo_piece() != Piece::NONE;
+        }
+
         void set_data(int from, int to, SpecialType type = NONE){
             data = 0;
             data |= from;
