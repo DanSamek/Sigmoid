@@ -257,7 +257,7 @@ namespace Sigmoid {
                         flag = LOWER_BOUND;
 
                         if (!is_capture)
-                            update_continuation_histories(stack, best_move, quiet_moves);
+                            update_continuation_histories(stack, best_move, quiet_moves, depth);
 
                         break;
                     }
@@ -329,11 +329,18 @@ namespace Sigmoid {
         }
 
 
-        void update_continuation_histories(const StackItem* stack, const Move& bestMove, const std::vector<Move>& quietMoves){
-            update_continuation_histories_move(stack, bestMove, 350);
+        void update_continuation_histories(const StackItem* stack,
+                                           const Move& bestMove,
+                                           const std::vector<Move>& quietMoves,
+                                           const int depth){
+
+            int bonus = std::min(80 * depth, 960);
+            int malus = std::min(60 * depth, 720);
+            
+            update_continuation_histories_move(stack, bestMove, bonus);
 
             for (const Move& move : quietMoves)
-                update_continuation_histories_move(stack, move, -150);
+                update_continuation_histories_move(stack, move, -malus);
         }
 
         void update_continuation_histories_move(const StackItem* stack, const Move& move, int bonus){
