@@ -332,8 +332,7 @@ namespace Sigmoid {
                                            const std::vector<Move>& quietMoves,
                                            const int depth){
 
-            int bonus = std::min(40 * depth, 480);
-
+            int bonus = std::min(110 * depth, 1650);
             update_continuation_histories_move(stack, bestMove, bonus, board.at(bestMove.from()));
 
             for (const Move& move : quietMoves)
