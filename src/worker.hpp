@@ -21,7 +21,9 @@ namespace Sigmoid {
         Timer* timer;
         int searchDepth;
 
-        MainHistory mainHistory;
+        MainHistory::type mainHistory;
+        ContinuationHistory continuationHistory;
+
         static inline std::array<std::array<int16_t, MAX_POSSIBLE_MOVES>, MAX_PLY> lmrTable;
         static inline bool loadedLmr = false;
 
@@ -178,7 +180,7 @@ namespace Sigmoid {
             }
 
 
-            MoveList<false> ml(&board, &mainHistory, &entry.move);
+            MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory, stack);
             Move move;
             int move_count = 0;
             Move best_move = NO_MOVE;
@@ -253,6 +255,10 @@ namespace Sigmoid {
 
                     if (value >= beta){
                         flag = LOWER_BOUND;
+
+                        if (!is_capture)
+                            update_continuation_histories(stack, best_move, quiet_moves);
+
                         break;
                     }
                 }
@@ -316,10 +322,29 @@ namespace Sigmoid {
         }
 
         void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves){
-            apply_gravity<int16_t>(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], 700);
+            apply_gravity(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], 700, MainHistory::maxValue);
 
             for (const Move& move: quietMoves)
-                apply_gravity<int16_t>(mainHistory[board.whoPlay][move.from()][move.to()], -250);
+                apply_gravity(mainHistory[board.whoPlay][move.from()][move.to()], -250, MainHistory::maxValue);
+        }
+
+
+        void update_continuation_histories(const StackItem* stack, const Move& bestMove, const std::vector<Move>& quietMoves){
+            update_continuation_histories_move(stack, bestMove, 350);
+
+            for (const Move& move : quietMoves)
+                update_continuation_histories_move(stack, move, -150);
+        }
+
+        void update_continuation_histories_move(const StackItem* stack, const Move& move, int bonus){
+            for (int n_ply = 1; n_ply <= CONT_HIST_MAX_PLY; n_ply++){
+                const Move& previous_move = (stack - n_ply)->currentMove;
+                if (previous_move == Move::none())
+                    break;
+
+                int& entry = continuationHistory[n_ply - 1][previous_move.from()][previous_move.to()][move.from()][move.to()];
+                apply_gravity(entry, bonus, ContinuationHistoryEntry::maxValue);
+            }
         }
 
         void prepare_for_search(){
@@ -327,6 +352,13 @@ namespace Sigmoid {
                 for (auto& from : color)
                     for (auto& to: from)
                         to = 0;
+
+            for (auto& n_ply : continuationHistory)
+                for (auto& prev_from: n_ply)
+                    for (auto& prev_to: prev_from)
+                        for (auto& curr_from: prev_to)
+                            for (auto& curr_to: curr_from)
+                                curr_to = 0;
 
             if (loadedLmr)
                 return;
