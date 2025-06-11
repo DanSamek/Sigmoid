@@ -70,6 +70,10 @@ namespace Sigmoid{
             return {0,0};
         }
 
+        inline static Move null(){
+            return {63,63};
+        }
+
         [[nodiscard]] std::string to_uci() const{
             std::ostringstream oss;
 
