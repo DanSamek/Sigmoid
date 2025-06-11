@@ -198,9 +198,9 @@ namespace Sigmoid {
                     continue;
 
                 // Late move pruning.
-                const int move_limit = 3 + depth * depth;
+                const int move_limit = 3 + depth * depth / 2;
                 if (!pv_node && move_count > move_limit && !in_check
-                    && !is_capture && !move.is_promotion() && depth >= 4)
+                    && !is_capture && !move.is_promotion())
                     continue;
 
                 if (!board.make_move(move))
