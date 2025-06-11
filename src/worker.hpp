@@ -55,12 +55,7 @@ namespace Sigmoid {
 
             for (int i = 0; i < MAX_PLY - 1; i++){
                 (root + i)->ply = i;
-                (root + i)->currentMove = Move::none();
-                (root + i)->excludedMove = Move::none();
-                (root + i)->can_null = true;
             }
-
-            (root - 1)->can_null = true;
 
             int16_t eval;
             for (int depth = 1; depth <= searchDepth; depth++){
@@ -169,9 +164,13 @@ namespace Sigmoid {
                     int16_t nmp_depth = std::max(depth - reduction, 1);
 
                     stack->can_null = false;
+                    stack->currentMove = Move::null();
+                    stack->movedPiece = NONE;
+
                     board.make_null_move();
                     const int16_t value = -negamax<NONPV>(nmp_depth, -beta, -beta + 1, stack + 1);
                     board.undo_null_move();
+
                     stack->can_null = true;
 
                     if (value >= beta)
@@ -183,14 +182,16 @@ namespace Sigmoid {
             MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory, stack);
             Move move;
             int move_count = 0;
-            Move best_move = NO_MOVE;
+            Move best_move = Move::none();
             int16_t best_value = MIN_VALUE;
             std::vector<Move> quiet_moves;
 
             TTFlag flag = UPPER_BOUND;
-            while ((move = ml.get()) != NO_MOVE){
+            while ((move = ml.get()) != Move::none()){
 
                 const bool is_capture = board.is_capture(move);
+                stack->movedPiece = board.at(move.from());
+                stack->currentMove = move;
 
                 // Futility pruning.
                 // If current eval is bad, we don't expect that quiet move will help us in this position,
@@ -199,11 +200,8 @@ namespace Sigmoid {
                     && static_eval + 110 * depth <= alpha && depth <= 8)
                     continue;
 
-
-
                 if (!board.make_move(move))
                     continue;
-                stack->currentMove = move;
 
                 move_count++;
                 tt->prefetch(board.key());
@@ -235,7 +233,7 @@ namespace Sigmoid {
                     if (value > alpha && pv_node)
                         value = -negamax<PV>(depth - 1, -beta, -alpha, stack + 1);
                 }
-                stack->currentMove = NO_MOVE;
+
                 board.undo_move();
 
                 if (is_time_out())
@@ -267,7 +265,7 @@ namespace Sigmoid {
                     quiet_moves.emplace_back(move);
             }
 
-            if (best_move != NO_MOVE && !board.is_capture(best_move))
+            if (best_move != Move::none() && !board.is_capture(best_move))
                 update_quiet_histories(best_move, quiet_moves);
 
             if (move_count == 0 && in_check)
@@ -295,7 +293,7 @@ namespace Sigmoid {
 
             MoveList<true> ml(&board);
             Move move;
-            while ((move = ml.get()) != NO_MOVE){
+            while ((move = ml.get()) != Move::none()){
                 if (!board.make_move(move))
                     continue;
 
@@ -334,22 +332,24 @@ namespace Sigmoid {
                                            const std::vector<Move>& quietMoves,
                                            const int depth){
 
-            int bonus = std::min(80 * depth, 960);
-            int malus = std::min(60 * depth, 720);
-            
-            update_continuation_histories_move(stack, bestMove, bonus);
+            int bonus = std::min(40 * depth, 480);
+
+            update_continuation_histories_move(stack, bestMove, bonus, board.at(bestMove.from()));
 
             for (const Move& move : quietMoves)
-                update_continuation_histories_move(stack, move, -malus);
+                update_continuation_histories_move(stack, move, -bonus, board.at(move.from()));
         }
 
-        void update_continuation_histories_move(const StackItem* stack, const Move& move, int bonus){
+        void update_continuation_histories_move(const StackItem* stack, const Move& move, int bonus, const Piece movedPiece){
+            assert(movedPiece != NONE);
+
             for (int n_ply = 1; n_ply <= CONT_HIST_MAX_PLY; n_ply++){
                 const Move& previous_move = (stack - n_ply)->currentMove;
-                if (previous_move == Move::none())
+                const Piece previous_piece = (stack - n_ply)->movedPiece;
+                if (previous_move == Move::none() || previous_move == Move::null())
                     break;
 
-                int& entry = continuationHistory[n_ply - 1][previous_move.from()][previous_move.to()][move.from()][move.to()];
+                int& entry = continuationHistory[n_ply - 1][previous_piece][previous_move.to()][movedPiece][move.to()];
                 apply_gravity(entry, bonus, ContinuationHistoryEntry::maxValue);
             }
         }

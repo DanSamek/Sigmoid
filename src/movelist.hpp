@@ -74,10 +74,12 @@ namespace Sigmoid {
                         int cont_ply_hist_score = 0;
                         for (int n_ply = 1; n_ply <= CONT_HIST_MAX_PLY; n_ply++){
                             const Move& previous_move = (stack - n_ply)->currentMove;
-                            if (previous_move == Move::none())
+                            const Piece previous_moved_piece = (stack - n_ply)->movedPiece;
+                            if (previous_move == Move::none() || previous_move == Move::null())
                                 break;
 
-                            int16_t entry = (*continuationHistory)[n_ply - 1][previous_move.from()][previous_move.to()][move.from()][move.to()];
+                            const Piece current_piece = board->at(move.from());
+                            int16_t entry = (*continuationHistory)[n_ply - 1][previous_moved_piece][previous_move.to()][current_piece][move.to()];
                             cont_ply_hist_score += entry;
                         }
                         return cont_ply_hist_score;

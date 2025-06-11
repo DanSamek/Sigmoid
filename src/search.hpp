@@ -24,7 +24,8 @@ namespace Sigmoid {
         Move currentMove = Move::none();
         Move excludedMove = Move::none();
         int8_t ply = 0;
-        bool can_null = false;
+        bool can_null = true;
+        Piece movedPiece = NONE;
     };
 }
 
