@@ -227,7 +227,7 @@ namespace Sigmoid {
                     if (!is_capture && tt_capture)
                         reduction += 64;
 
-                    if (!improving)
+                    if (stack->ply > 1 && !improving)
                         reduction += 32;
 
                     reduction /= 128; // Scaling to a depth.
