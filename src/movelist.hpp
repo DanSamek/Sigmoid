@@ -81,7 +81,7 @@ namespace Sigmoid {
                                 break;
 
                             const Piece current_piece = board->at(move.from());
-                            int16_t entry = (*continuationHistory)[idx][previous_moved_piece][previous_move.to()][current_piece][move.to()];
+                            int16_t entry = (*continuationHistory)[idx][board->whoPlay][previous_moved_piece][previous_move.to()][current_piece][move.to()];
                             cont_ply_hist_score += entry;
                         }
                         return cont_ply_hist_score;

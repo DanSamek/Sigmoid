@@ -341,7 +341,7 @@ namespace Sigmoid {
 
         void update_continuation_histories_move(const StackItem* stack, const Move& move, int bonus, const Piece movedPiece){
             assert(movedPiece != NONE);
-            constexpr static std::array<std::array<int, 3>, 2> bonuses = {{{1, 128, 0}, {2, 256, 1}}};
+            constexpr static std::array<std::array<int, 3>, 2> bonuses = {{{1, 128, 0}, {2, 128, 1}}};
 
             for (auto [ply, div, idx] : bonuses){
                 const Move& previous_move = (stack - ply)->currentMove;
@@ -349,7 +349,7 @@ namespace Sigmoid {
                 if (previous_move == Move::none() || previous_move == Move::null())
                     break;
 
-                int& entry = continuationHistory[idx][previous_piece][previous_move.to()][movedPiece][move.to()];
+                int& entry = continuationHistory[idx][board.whoPlay][previous_piece][previous_move.to()][movedPiece][move.to()];
                 const int scaled_bonus = (128 * bonus) / div;
                 apply_gravity(entry, scaled_bonus, ContinuationHistoryEntry::maxValue);
             }
@@ -362,11 +362,12 @@ namespace Sigmoid {
                         to = 0;
 
             for (auto& n_ply : continuationHistory)
-                for (auto& prev_from: n_ply)
-                    for (auto& prev_to: prev_from)
-                        for (auto& curr_from: prev_to)
-                            for (auto& curr_to: curr_from)
-                                curr_to = 0;
+                for (auto& color: n_ply)
+                    for (auto& prev_from: color)
+                        for (auto& prev_to: prev_from)
+                            for (auto& curr_from: prev_to)
+                                for (auto& curr_to: curr_from)
+                                    curr_to = 0;
 
             if (loadedLmr)
                 return;
