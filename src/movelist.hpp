@@ -72,14 +72,16 @@ namespace Sigmoid {
 
                     auto get_cont_ply_hist = [&]()->int{
                         int cont_ply_hist_score = 0;
-                        for (int n_ply = 1; n_ply <= CONT_HIST_MAX_PLY; n_ply++){
-                            const Move& previous_move = (stack - n_ply)->currentMove;
-                            const Piece previous_moved_piece = (stack - n_ply)->movedPiece;
+                        constexpr static std::array<std::array<int, 2>, 2> ply_idx = {{{1, 0}, {2, 1}}};
+
+                        for (auto [ply, idx] : ply_idx){
+                            const Move& previous_move = (stack - ply)->currentMove;
+                            const Piece previous_moved_piece = (stack - ply)->movedPiece;
                             if (previous_move == Move::none() || previous_move == Move::null())
                                 break;
 
                             const Piece current_piece = board->at(move.from());
-                            int16_t entry = (*continuationHistory)[n_ply - 1][previous_moved_piece][previous_move.to()][current_piece][move.to()];
+                            int16_t entry = (*continuationHistory)[idx][previous_moved_piece][previous_move.to()][current_piece][move.to()];
                             cont_ply_hist_score += entry;
                         }
                         return cont_ply_hist_score;

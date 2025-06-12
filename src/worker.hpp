@@ -50,8 +50,8 @@ namespace Sigmoid {
 
         void iterative_deepening() {
 
-            StackItem stack[MAX_PLY + 1];
-            StackItem* root = stack + 1;
+            StackItem stack[MAX_PLY + 5];
+            StackItem* root = stack + 5;
 
             for (int i = 0; i < MAX_PLY - 1; i++){
                 (root + i)->ply = i;
@@ -341,15 +341,17 @@ namespace Sigmoid {
 
         void update_continuation_histories_move(const StackItem* stack, const Move& move, int bonus, const Piece movedPiece){
             assert(movedPiece != NONE);
+            constexpr static std::array<std::array<int, 3>, 2> bonuses = {{{1, 128, 0}, {2, 128, 1}}};
 
-            for (int n_ply = 1; n_ply <= CONT_HIST_MAX_PLY; n_ply++){
-                const Move& previous_move = (stack - n_ply)->currentMove;
-                const Piece previous_piece = (stack - n_ply)->movedPiece;
+            for (auto [ply, div, idx] : bonuses){
+                const Move& previous_move = (stack - ply)->currentMove;
+                const Piece previous_piece = (stack - ply)->movedPiece;
                 if (previous_move == Move::none() || previous_move == Move::null())
                     break;
 
-                int& entry = continuationHistory[n_ply - 1][previous_piece][previous_move.to()][movedPiece][move.to()];
-                apply_gravity(entry, bonus, ContinuationHistoryEntry::maxValue);
+                int& entry = continuationHistory[idx][previous_piece][previous_move.to()][movedPiece][move.to()];
+                const int scaled_bonus = (128 * bonus) / div;
+                apply_gravity(entry, scaled_bonus, ContinuationHistoryEntry::maxValue);
             }
         }
 
