@@ -33,7 +33,7 @@ namespace Sigmoid{
     const int CONT_HIST_MAX_PLY = 1;
     const int MAX_CONT_HIST_BONUS = 20'000;
     // [prev_pc][prev_to_sq] [pc][to_sq]
-    using ContinuationHistoryEntry = History<MAX_CONT_HIST_BONUS, NUM_PIECES, NUM_SQUARES, NUM_PIECES, NUM_SQUARES>;
+    using ContinuationHistoryEntry = History<MAX_CONT_HIST_BONUS, NUM_COLORS, NUM_PIECES, NUM_SQUARES, NUM_PIECES, NUM_SQUARES>;
     using ContinuationHistory = std::array<ContinuationHistoryEntry::type, CONT_HIST_MAX_PLY>;
 
     const int TT_MOVE_VALUE = 1'000'000;
