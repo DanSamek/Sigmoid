@@ -13,6 +13,8 @@ namespace Sigmoid {
 
     template<bool captures>
     struct MoveList {
+
+        // Main search
         MoveList(const Board* board,
                  const MainHistory::type* mainHistory,
                  const Move* ttMove,
@@ -20,7 +22,13 @@ namespace Sigmoid {
                  const StackItem* stack,
                  const CaptureHistory::type* captureHistory) : board(board), mainHistory(mainHistory), ttMove(ttMove),
                                            continuationHistory(continuationHistory),stack(stack), captureHistory(captureHistory){}
+       // Qsearch
+       MoveList(const Board* board,
+                const Move* ttMove,
+                const CaptureHistory::type* captureHistory)
+                :board(board), ttMove(ttMove), captureHistory(captureHistory) {}
 
+        // For movegen testing.
         MoveList(const Board* board) : board(board) {}
 
 
