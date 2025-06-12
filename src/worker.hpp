@@ -50,6 +50,10 @@ namespace Sigmoid {
         }
 
         void iterative_deepening() {
+            for (auto& ply: killerMoves)
+                for (auto& move: ply)
+                    move = Move::none();
+
 
             StackItem stack[MAX_PLY + 1];
             StackItem* root = stack + 1;
@@ -372,10 +376,6 @@ namespace Sigmoid {
                         for (auto& curr_from: prev_to)
                             for (auto& curr_to: curr_from)
                                 curr_to = 0;
-
-            for (auto& ply: killerMoves)
-                for (auto& move: ply)
-                    move = Move::none();
 
             if (loadedLmr)
                 return;
