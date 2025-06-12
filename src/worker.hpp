@@ -341,7 +341,7 @@ namespace Sigmoid {
 
         void update_continuation_histories_move(const StackItem* stack, const Move& move, int bonus, const Piece movedPiece){
             assert(movedPiece != NONE);
-            constexpr static std::array<std::array<int, 3>, 2> bonuses = {{{1, 128, 0}, {2, 256, 1}}};
+            constexpr static std::array<std::array<int, 3>, 2> bonuses = {{{1, 128, 0}, {2, 128, 1}}};
 
             for (auto [ply, div, idx] : bonuses){
                 const Move& previous_move = (stack - ply)->currentMove;
