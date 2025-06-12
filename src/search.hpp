@@ -26,6 +26,7 @@ namespace Sigmoid {
         int8_t ply = 0;
         bool can_null = true;
         Piece movedPiece = NONE;
+        int16_t eval = MAX_VALUE;
     };
 }
 

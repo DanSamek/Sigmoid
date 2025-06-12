@@ -51,8 +51,8 @@ namespace Sigmoid {
 
         void iterative_deepening() {
 
-            StackItem stack[MAX_PLY + 1];
-            StackItem* root = stack + 1;
+            StackItem stack[MAX_PLY + 5];
+            StackItem* root = stack + 5;
 
             for (int i = 0; i < MAX_PLY - 1; i++){
                 (root + i)->ply = i;
@@ -147,8 +147,10 @@ namespace Sigmoid {
                 return q_search(alpha, beta, stack);
 
             stack->can_null = (stack - 1)->can_null;
-            const int16_t static_eval = board.eval();
+            const int16_t static_eval = stack->eval = board.eval();
             const bool in_check = board.in_check();
+
+            const bool improving = stack->eval > (stack - 2)->eval;
 
             if (!in_check) {
                 // Reverse futility pruning.
@@ -223,6 +225,9 @@ namespace Sigmoid {
                         reduction -= 128;
 
                     if (!is_capture && tt_capture)
+                        reduction += 64;
+
+                    if (!improving)
                         reduction += 64;
 
                     reduction /= 128; // Scaling to a depth.
