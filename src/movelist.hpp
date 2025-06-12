@@ -17,8 +17,10 @@ namespace Sigmoid {
                  const MainHistory::type* mainHistory,
                  const Move* ttMove,
                  const ContinuationHistory* continuationHistory,
-                 const StackItem* stack) : board(board), mainHistory(mainHistory), ttMove(ttMove),
-                                           continuationHistory(continuationHistory),stack(stack){}
+                 const StackItem* stack,
+                 const std::array<Move, 2>* killerMoves) : board(board), mainHistory(mainHistory), ttMove(ttMove),
+                                           continuationHistory(continuationHistory),stack(stack),
+                                           killerMoves(killerMoves){}
 
         MoveList(const Board* board) : board(board) {}
 
@@ -53,6 +55,7 @@ namespace Sigmoid {
         void score_moves(){
             for (int i = 0; i < size; i++){
                 scores[i] = 0;
+
                 const Move& move = moves[i];
                 bool capture = board->is_capture(move);
 
@@ -85,6 +88,13 @@ namespace Sigmoid {
                         return cont_ply_hist_score;
                     };
                     scores[i] += get_cont_ply_hist();
+
+                    if (move == (*killerMoves)[1])
+                        scores[i] = KILLER_BONUS[1];
+
+                    if (move == (*killerMoves)[0])
+                        scores[i] = KILLER_BONUS[0];
+
                 }
             }
         }
@@ -94,6 +104,8 @@ namespace Sigmoid {
         const Move* ttMove = nullptr;
         const ContinuationHistory* continuationHistory = nullptr;
         const StackItem* stack = nullptr;
+        const std::array<Move, 2>* killerMoves = nullptr;
+
 
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
         std::array<int, MAX_POSSIBLE_MOVES> scores;

@@ -23,6 +23,7 @@ namespace Sigmoid {
 
         MainHistory::type mainHistory;
         ContinuationHistory continuationHistory;
+        KillerMoves killerMoves;
 
         static inline std::array<std::array<int16_t, MAX_POSSIBLE_MOVES>, MAX_PLY> lmrTable;
         static inline bool loadedLmr = false;
@@ -179,7 +180,7 @@ namespace Sigmoid {
             }
 
 
-            MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory, stack);
+            MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory, stack, &killerMoves[stack->ply]);
             Move move;
             int move_count = 0;
             Move best_move = Move::none();
@@ -256,7 +257,8 @@ namespace Sigmoid {
 
                         if (!is_capture) {
                             update_continuation_histories(stack, best_move, quiet_moves, depth);
-                            update_quiet_histories(best_move, quiet_moves, depth);
+                            update_main_history(best_move, quiet_moves, depth);
+                            add_killer_move(best_move, stack->ply);
                         }
 
                         break;
@@ -318,7 +320,7 @@ namespace Sigmoid {
             return best_value;
         }
 
-        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
+        void update_main_history(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
             int bonus = std::min(150 * depth, 1650);
             apply_gravity(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], bonus, MainHistory::maxValue);
 
@@ -353,6 +355,11 @@ namespace Sigmoid {
             }
         }
 
+        void add_killer_move(const Move& move, int ply){
+            killerMoves[ply][1] = killerMoves[ply][0];
+            killerMoves[ply][0] = move;
+        }
+
         void prepare_for_search(){
             for (auto& color : mainHistory)
                 for (auto& from : color)
@@ -365,6 +372,10 @@ namespace Sigmoid {
                         for (auto& curr_from: prev_to)
                             for (auto& curr_to: curr_from)
                                 curr_to = 0;
+
+            for (auto& ply: killerMoves)
+                for (auto& move: ply)
+                    move = Move::none();
 
             if (loadedLmr)
                 return;
