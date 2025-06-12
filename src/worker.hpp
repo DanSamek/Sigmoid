@@ -254,8 +254,10 @@ namespace Sigmoid {
                     if (value >= beta){
                         flag = LOWER_BOUND;
 
-                        if (!is_capture)
+                        if (!is_capture) {
                             update_continuation_histories(stack, best_move, quiet_moves, depth);
+                            update_quiet_histories(best_move, quiet_moves, depth);
+                        }
 
                         break;
                     }
@@ -264,9 +266,6 @@ namespace Sigmoid {
                 if (!is_capture && move != best_move)
                     quiet_moves.emplace_back(move);
             }
-
-            if (best_move != Move::none() && !board.is_capture(best_move))
-                update_quiet_histories(best_move, quiet_moves);
 
             if (move_count == 0 && in_check)
                 return -CHECKMATE + stack->ply;
@@ -319,11 +318,12 @@ namespace Sigmoid {
             return best_value;
         }
 
-        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves){
-            apply_gravity(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], 700, MainHistory::maxValue);
+        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
+            int bonus = std::min(150 * depth, 1650);
+            apply_gravity(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], bonus, MainHistory::maxValue);
 
             for (const Move& move: quietMoves)
-                apply_gravity(mainHistory[board.whoPlay][move.from()][move.to()], -250, MainHistory::maxValue);
+                apply_gravity(mainHistory[board.whoPlay][move.from()][move.to()], -bonus, MainHistory::maxValue);
         }
 
 
