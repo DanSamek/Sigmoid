@@ -17,8 +17,9 @@ namespace Sigmoid {
                  const MainHistory::type* mainHistory,
                  const Move* ttMove,
                  const ContinuationHistory* continuationHistory,
-                 const StackItem* stack) : board(board), mainHistory(mainHistory), ttMove(ttMove),
-                                           continuationHistory(continuationHistory),stack(stack){}
+                 const StackItem* stack,
+                 const CaptureHistory::type* captureHistory) : board(board), mainHistory(mainHistory), ttMove(ttMove),
+                                           continuationHistory(continuationHistory),stack(stack), captureHistory(captureHistory){}
 
         MoveList(const Board* board) : board(board) {}
 
@@ -63,7 +64,13 @@ namespace Sigmoid {
                     Piece captured_piece = move.special_type() == Move::EN_PASSANT ? PAWN : board->at(move.to());
                     Piece from_piece = board->at(move.from());
                     scores[i] = QUIET_OFFSET;
-                    scores[i] += ((captured_piece + 1) * 10000) * (KING - from_piece + 1);
+                    scores[i] += ((captured_piece + 1) * 100) * (KING - from_piece + 1);
+                    if (captureHistory){
+                        Piece moved_piece = board->at(move.from());
+                        int to_square = move.to();
+
+                        scores[i] += (*captureHistory)[moved_piece][to_square][captured_piece];
+                    }
                 }
                 else{
                     if (!mainHistory) continue;
@@ -94,6 +101,7 @@ namespace Sigmoid {
         const Move* ttMove = nullptr;
         const ContinuationHistory* continuationHistory = nullptr;
         const StackItem* stack = nullptr;
+        const CaptureHistory::type* captureHistory = nullptr;
 
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
         std::array<int, MAX_POSSIBLE_MOVES> scores;

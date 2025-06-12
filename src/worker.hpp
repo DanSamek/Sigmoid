@@ -23,6 +23,7 @@ namespace Sigmoid {
 
         MainHistory::type mainHistory;
         ContinuationHistory continuationHistory;
+        CaptureHistory::type captureHistory;
 
         static inline std::array<std::array<int16_t, MAX_POSSIBLE_MOVES>, MAX_PLY> lmrTable;
         static inline bool loadedLmr = false;
@@ -179,12 +180,13 @@ namespace Sigmoid {
             }
 
 
-            MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory, stack);
+            MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory, stack, &captureHistory);
             Move move;
             int move_count = 0;
             Move best_move = Move::none();
             int16_t best_value = MIN_VALUE;
             std::vector<Move> quiet_moves;
+            std::vector<Move> capture_moves;
 
             TTFlag flag = UPPER_BOUND;
             while ((move = ml.get()) != Move::none()){
@@ -258,6 +260,9 @@ namespace Sigmoid {
                             update_continuation_histories(stack, best_move, quiet_moves, depth);
                             update_quiet_histories(best_move, quiet_moves, depth);
                         }
+                        else{
+                            update_capture_history(best_move, capture_moves, depth);
+                        }
 
                         break;
                     }
@@ -265,6 +270,9 @@ namespace Sigmoid {
 
                 if (!is_capture && move != best_move)
                     quiet_moves.emplace_back(move);
+
+                if (is_capture && move != best_move)
+                    capture_moves.emplace_back(move);
             }
 
             if (move_count == 0 && in_check)
@@ -353,6 +361,27 @@ namespace Sigmoid {
             }
         }
 
+        void update_capture_history(const Move& bestMove,
+                                    const std::vector<Move>& captureMoves,
+                                    const int depth){
+
+            int bonus = std::min(150 * depth, 1650);
+
+            auto update_capture_history = [this](const Move& move, const int bonus){
+                Piece moved_piece = board.at(move.from());
+                int to_square = move.to();
+                Piece captured_piece = move.special_type() == Move::EN_PASSANT ? PAWN : board.at(move.to());
+                assert(captured_piece != NONE);
+                apply_gravity(captureHistory[moved_piece][to_square][captured_piece], bonus, CaptureHistory::maxValue);
+            };
+
+            update_capture_history(bestMove, bonus);
+
+            for (const Move& move: captureMoves) {
+                update_capture_history(move, -bonus);
+            }
+        }
+
         void prepare_for_search(){
             for (auto& color : mainHistory)
                 for (auto& from : color)
@@ -365,6 +394,11 @@ namespace Sigmoid {
                         for (auto& curr_from: prev_to)
                             for (auto& curr_to: curr_from)
                                 curr_to = 0;
+
+            for (auto& pc: captureHistory)
+                for (auto& square: pc)
+                    for (auto& pc2 : square)
+                        pc2 = 0;
 
             if (loadedLmr)
                 return;
