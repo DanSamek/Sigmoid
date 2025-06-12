@@ -150,7 +150,7 @@ namespace Sigmoid {
             const int16_t static_eval = stack->eval = board.eval();
             const bool in_check = board.in_check();
 
-            const bool improving = stack->eval > (stack - 2)->eval;
+            const bool improving = stack->eval > (stack - 2)->eval && !in_check;
 
             if (!in_check) {
                 // Reverse futility pruning.
@@ -228,7 +228,7 @@ namespace Sigmoid {
                         reduction += 64;
 
                     if (!improving)
-                        reduction += 64;
+                        reduction += 32;
 
                     reduction /= 128; // Scaling to a depth.
                     reduction = std::clamp((int)reduction, 0, depth - 2);
