@@ -23,5 +23,8 @@ namespace Sigmoid {
     constexpr int16_t NUM_PIECES  = 6;
     constexpr int16_t NUM_COLORS  = 2;
 
+
+    static constexpr int SEE_VALUES[6] = {100, 300, 300, 500, 900, 0};
+
 }
 #endif //SIGMOID_CONSTANTS_HPP
