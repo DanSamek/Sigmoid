@@ -197,7 +197,6 @@ namespace Sigmoid {
                 stack->movedPiece = board.at(move.from());
                 stack->currentMove = move;
 
-
                 if (!is_capture && !in_check){
 
                     // Futility pruning.
@@ -215,6 +214,9 @@ namespace Sigmoid {
                     if(!root_node && depth <= 7 && alpha > -CHECKMATE_BOUND && !board.see(move, -80 * depth))
                         continue;
                 }
+
+                if (!root_node && depth <= 7 && is_capture && !in_check && !board.see(move, -40 * 40 * depth))
+                    continue;
 
                 if (!board.make_move(move))
                     continue;
