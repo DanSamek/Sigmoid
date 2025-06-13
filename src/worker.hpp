@@ -122,10 +122,12 @@ namespace Sigmoid {
             if (stack->ply >= MAX_PLY)
                 return board.eval();
 
+            const bool is_singular = stack->excludedMove != Move::none();
+
             auto [entry, tt_hit] = tt->probe(board.key());
             const bool tt_capture = tt_hit && board.is_capture(entry.move);
 
-            if (!pv_node && tt_hit && entry.depth >= depth){
+            if (!pv_node && tt_hit && entry.depth >= depth && !is_singular){
 
                 auto correct_tt_eval = [&stack](int16_t eval)-> int16_t {
                     auto abs_eval = std::abs(eval);
@@ -152,7 +154,7 @@ namespace Sigmoid {
 
             const bool improving = stack->eval > (stack - 2)->eval;
 
-            if (!in_check) {
+            if (!in_check && !is_singular) {
                 // Reverse futility pruning.
                 // If eval is really good, that even with big margin beats beta, return static eval.
                 if (!pv_node && depth <= 8 && static_eval >= beta + 100 * depth)
@@ -193,6 +195,9 @@ namespace Sigmoid {
             TTFlag flag = UPPER_BOUND;
             while ((move = ml.get()) != Move::none()){
 
+                if (move == stack->excludedMove)
+                    continue;
+
                 const bool is_capture = board.is_capture(move);
                 stack->movedPiece = board.at(move.from());
                 stack->currentMove = move;
@@ -202,7 +207,7 @@ namespace Sigmoid {
                     // Futility pruning.
                     // If current eval is bad, we don't expect that quiet move will help us in this position,
                     // so we can skip it.
-                    if (!pv_node && move_count && static_eval + 110 * depth <= alpha && depth <= 8)
+                    if (!pv_node && move_count && static_eval + 110 * depth <= alpha && depth <= 8 && !is_singular)
                         continue;
 
                     // Late move pruning.
@@ -219,6 +224,24 @@ namespace Sigmoid {
                 if (!root_node && depth <= 7 && is_capture && !in_check && !board.see(move, -40 * depth * depth))
                     continue;
 
+
+                // Singular extensions.
+                int extension = 0;
+                if (!root_node && move == entry.move &&
+                    depth >= 8 && entry.flag != UPPER_BOUND
+                    && entry.depth + 3 >= depth && std::abs(entry.eval) < CHECKMATE_BOUND){
+
+                    const int16_t singular_beta = entry.eval - depth;
+                    const int singular_depth = (depth - 1) / 2;
+
+                    stack->excludedMove = move;
+                    const int16_t value = negamax<NONPV>(singular_depth, singular_beta - 1, singular_beta, stack);
+                    stack->excludedMove = Move::none();
+
+                    if (value < singular_beta)
+                        extension = 1;
+                }
+
                 if (!board.make_move(move))
                     continue;
 
@@ -227,8 +250,10 @@ namespace Sigmoid {
 
                 int16_t value;
                 int16_t reduction = 0;
-                if (depth >= 3 && !root_node){
-                    reduction = lmrTable[depth - 1][move_count - 1];
+
+                int new_depth = depth + extension;
+                if (new_depth >= 3 && !root_node){
+                    reduction = lmrTable[new_depth - 1][move_count - 1];
 
                     if (pv_node)
                         reduction -= 128;
@@ -240,20 +265,20 @@ namespace Sigmoid {
                         reduction += 64;
 
                     reduction /= 128; // Scaling to a depth.
-                    reduction = std::clamp((int)reduction, 0, depth - 2);
+                    reduction = std::clamp((int)reduction, 0, new_depth - 2);
                 }
 
                 if (move_count == 1 && pv_node){
-                    value = -negamax<PV>(depth - 1, -beta, -alpha, stack + 1);
+                    value = -negamax<PV>(new_depth - 1, -beta, -alpha, stack + 1);
                 }
                 else{
-                    value = -negamax<NONPV>(depth - 1 - reduction, -alpha - 1, -alpha, stack + 1);
+                    value = -negamax<NONPV>(new_depth - 1 - reduction, -alpha - 1, -alpha, stack + 1);
 
                     if (value > alpha && reduction)
-                        value = -negamax<NONPV>(depth - 1, -alpha - 1, -alpha, stack + 1);
+                        value = -negamax<NONPV>(new_depth - 1, -alpha - 1, -alpha, stack + 1);
 
                     if (value > alpha && pv_node)
-                        value = -negamax<PV>(depth - 1, -beta, -alpha, stack + 1);
+                        value = -negamax<PV>(new_depth - 1, -beta, -alpha, stack + 1);
                 }
 
                 board.undo_move();
@@ -300,7 +325,9 @@ namespace Sigmoid {
             else if (move_count == 0)
                 return DRAW;
 
-            tt->store(board.key(), best_move, flag, depth, best_value, stack->ply);
+            if (!is_singular)
+                tt->store(board.key(), best_move, flag, depth, best_value, stack->ply);
+
             return best_value;
         }
 
