@@ -210,11 +210,12 @@ namespace Sigmoid {
                     if (!pv_node && move_count > move_count_limit && !move.is_promotion())
                         continue;
 
-                    // See pruning of quiet moves.
+                    // SEE pruning of quiets.
                     if(!root_node && depth <= 7 && alpha > -CHECKMATE_BOUND && !board.see(move, -80 * depth))
                         continue;
                 }
 
+                // SEE pruning of captures.
                 if (!root_node && depth <= 7 && is_capture && !in_check && !board.see(move, -40 * depth * depth))
                     continue;
 
@@ -319,7 +320,13 @@ namespace Sigmoid {
 
             MoveList<true> ml(&board);
             Move move;
+
+            const bool in_check = board.in_check();
             while ((move = ml.get()) != Move::none()){
+                
+                if (!in_check && !board.see(move, 0))
+                    continue;
+
                 if (!board.make_move(move))
                     continue;
 
