@@ -215,7 +215,7 @@ namespace Sigmoid {
                         continue;
                 }
 
-                if (!root_node && depth <= 7 && is_capture && !in_check && !board.see(move, -40 * 40 * depth))
+                if (!root_node && depth <= 7 && is_capture && !in_check && !board.see(move, -40 * depth * depth))
                     continue;
 
                 if (!board.make_move(move))
