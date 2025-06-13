@@ -12,6 +12,7 @@
 #include "board_tests.hpp"
 #include "movegen_tests.hpp"
 #include "zobrist_tests.hpp"
+#include "see_tests.hpp"
 
 // No lib used for tests.
 // Most of the tests are just sanity checks.
@@ -20,6 +21,7 @@ struct TestRunner{
         srand(17);
 
         std::vector<std::unique_ptr<Test>> tests;
+        tests.push_back(std::make_unique<SeeTests>());
         tests.push_back(std::make_unique<MoveTests>());
         tests.push_back(std::make_unique<ColorTests>());
         tests.push_back(std::make_unique<PairBitboardTests>());

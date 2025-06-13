@@ -369,6 +369,80 @@ namespace Sigmoid {
             return false;
         }
 
+        static constexpr int SEE_VALUES[6] = {100, 300, 300, 500, 900, 0};
+
+        [[nodiscard]] bool see(const Sigmoid::Move &move, int threshold) const {
+            const int from = move.from();
+            const int to = move.to();
+
+            Piece target = move.special_type() == Move::EN_PASSANT ? PAWN : at(to);
+            Piece attacker = at(from);
+
+            int value = -threshold;
+
+            if (target != NONE)
+                value += SEE_VALUES[target];
+
+            if (value < 0)
+                return false;
+
+            value -= SEE_VALUES[attacker];
+            if (value >= 0)
+                return true;
+
+            const uint64_t white = get_occupancy<WHITE>(currentState);
+            const uint64_t black = get_occupancy<BLACK>(currentState);
+            const uint64_t all = white | black;
+
+            uint64_t occupied = (all ^ (1ULL << from)) ^ (1ULL << to);
+            uint64_t attackers = get_all_attackers(occupied, to);
+
+            const Color color_start = get_nth_bit(white, from) ? WHITE : BLACK;
+            Color color_state = get_nth_bit(white, from) ? BLACK : WHITE;
+
+            const uint64_t queens = get_bitboard<WHITE, QUEEN>() | get_bitboard<BLACK, QUEEN>();
+            const uint64_t bishops = get_bitboard<WHITE, BISHOP>() | get_bitboard<BLACK, BISHOP>() | queens;
+            const uint64_t rooks = get_bitboard<WHITE, ROOK>() | get_bitboard<BLACK, ROOK>() | queens;
+
+            while(true){
+                attackers &= occupied;
+                uint64_t current_attackers = (color_state == BLACK ? black : white) & attackers;
+
+                // No more attackers
+                if(current_attackers == 0ULL)
+                    break;
+
+                // Least valuable attacker
+                int pc;
+                for(pc = PAWN; pc <= KING; pc++){
+                    if(current_attackers & (currentState.bitboards[pc].get<WHITE>() | currentState.bitboards[pc].get<BLACK>()))
+                        break;
+                }
+
+                color_state = ~color_state;
+
+                value = -value - 1 - SEE_VALUES[pc];
+                if(value >= 0){
+                    if(pc == KING && (attackers & (color_state == WHITE ? white : black)))
+                        color_state = ~color_state;
+                    break;
+                }
+
+                // Make a capture
+                uint64_t tmp = current_attackers & (get_pc_bitboard<WHITE>(Piece(pc)) | get_pc_bitboard<BLACK>(Piece(pc)));
+                occupied ^= (1ULL << bit_scan_forward(tmp));
+
+                // Maybe a capture creates a new attackers on a target square
+                if(pc == PAWN || pc == QUEEN || pc == BISHOP)
+                    attackers |= Magics::get_bishop_moves(occupied, to) & bishops;
+
+                if(pc == ROOK || pc == QUEEN)
+                    attackers |= Magics::get_rook_moves(occupied, to) & rooks;
+            }
+
+            return color_state != color_start;
+        }
+
     private:
 
         template<Color us>
@@ -460,11 +534,18 @@ namespace Sigmoid {
             state.zobristKey ^= Zobrist::pieceKeys[~us][PAWN][enemy_pawn_square];
         }
 
-        inline static uint64_t get_occupancy(const State& state) {
+        inline static uint64_t get_occupancy(const State& state){
             uint64_t occ = 0ULL;
-            for (const PairBitboard& pb : state.bitboards){
+            for (const PairBitboard& pb : state.bitboards)
                 occ |= pb.get<WHITE>() | pb.get<BLACK>();
-            }
+            return occ;
+        }
+
+        template<Color color>
+        inline static uint64_t get_occupancy(const State& state){
+            uint64_t occ = 0ULL;
+            for (const PairBitboard& pb : state.bitboards)
+                occ |= pb.get<color>();
             return occ;
         }
 
@@ -504,6 +585,33 @@ namespace Sigmoid {
         void handle_ep_nnue(int to){
             const int enemy_pawn_square = us == WHITE ? to + 8 : to - 8;
             nnue.sub(~us, PAWN, enemy_pawn_square);
+        }
+
+        template<Color us>
+        inline uint64_t get_all_attackers(const uint64_t &occupancy, int toSquare) const{
+            const uint64_t queens = get_bitboard<us, QUEEN>();
+
+            uint64_t attackers = Magics::get_rook_moves(occupancy, toSquare) & (get_bitboard<us, ROOK>() | queens);
+            attackers |= Magics::get_bishop_moves(occupancy, toSquare) & (get_bitboard<us, BISHOP>() | queens);
+            attackers |= Movegen::knightMoves[toSquare] & get_bitboard<us, KNIGHT>();
+            attackers |= Movegen::pawnAttackMoves[~us][toSquare] & get_bitboard<us, PAWN>();
+            attackers |= Movegen::kingMoves[toSquare] & get_bitboard<us, KING>();
+            return attackers;
+        }
+
+        uint64_t get_all_attackers(const uint64_t &occupancy, int toSquare) const{
+            return get_all_attackers<WHITE>(occupancy, toSquare) | get_all_attackers<BLACK>(occupancy, toSquare);
+        }
+
+
+        template<Color us, Piece pc>
+        [[nodiscard]] uint64_t get_bitboard() const{
+            return currentState.bitboards[pc].get<us>();
+        }
+
+        template<Color us>
+        [[nodiscard]] uint64_t get_pc_bitboard(Piece pc) const {
+            return currentState.bitboards[pc].get<us>();
         }
     };
 }

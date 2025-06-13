@@ -197,18 +197,24 @@ namespace Sigmoid {
                 stack->movedPiece = board.at(move.from());
                 stack->currentMove = move;
 
-                // Futility pruning.
-                // If current eval is bad, we don't expect that quiet move will help us in this position,
-                // so we can skip it.
-                if (!pv_node && move_count && !is_capture && !in_check
-                    && static_eval + 110 * depth <= alpha && depth <= 8)
-                    continue;
 
-                // Late move pruning.
-                const int move_count_limit = 3 + depth * depth;
-                if (!pv_node && !is_capture && !in_check
-                    && move_count > move_count_limit && !move.is_promotion())
-                    continue;
+                if (!is_capture && !in_check){
+
+                    // Futility pruning.
+                    // If current eval is bad, we don't expect that quiet move will help us in this position,
+                    // so we can skip it.
+                    if (!pv_node && move_count && static_eval + 110 * depth <= alpha && depth <= 8)
+                        continue;
+
+                    // Late move pruning.
+                    const int move_count_limit = 3 + depth * depth;
+                    if (!pv_node && move_count > move_count_limit && !move.is_promotion())
+                        continue;
+
+                    // See pruning of quiet moves.
+                    if(!root_node && depth <= 7 && alpha > -CHECKMATE_BOUND && !board.see(move, -80 * depth))
+                        continue;
+                }
 
                 if (!board.make_move(move))
                     continue;
