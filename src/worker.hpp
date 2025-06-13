@@ -150,7 +150,7 @@ namespace Sigmoid {
             const int16_t static_eval = stack->eval = board.eval();
             const bool in_check = board.in_check();
 
-            const bool improving = stack->eval > (stack - 2)->eval;
+            const bool improving = stack->ply <= 1 || (stack->eval > (stack - 2)->eval && !in_check);
 
             if (!in_check) {
                 // Reverse futility pruning.
