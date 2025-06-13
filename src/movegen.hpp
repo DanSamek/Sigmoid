@@ -59,6 +59,8 @@ namespace Sigmoid{
             return false;
         }
 
+        static inline std::array<uint64_t, 64> kingMoves, knightMoves;
+        static inline std::array<std::array<uint64_t, 64>, 2> pawnQuietMoves, pawnAttackMoves;
     private:
 
         template<bool captures>
@@ -196,8 +198,6 @@ namespace Sigmoid{
             }
         }
 
-
-    private:
         static inline constexpr int Q_CASTLE = 0;
         static inline constexpr int K_CASTLE = 1;
 
@@ -205,9 +205,6 @@ namespace Sigmoid{
         static inline constexpr uint64_t WHITE_PAWN_START_BB = 0xff000000000000;
 
         static inline constexpr uint64_t PAWN_STARTS[2] = {WHITE_PAWN_START_BB, BLACK_PAWN_START_BB};
-
-        static inline std::array<uint64_t, 64> kingMoves, knightMoves;
-        static inline std::array<std::array<uint64_t, 64>, 2> pawnQuietMoves, pawnAttackMoves;
 
         static constexpr std::array<std::array<uint64_t, 2>, 2> CASTLING_FREE_MASKS = {{
             {{0xe00000000000000, 0x6000000000000000}},{{0xe,0x60}}
