@@ -208,7 +208,12 @@ namespace Sigmoid {
         }
 
         int16_t eval() {
-            return whoPlay == WHITE ? nnue.eval<WHITE>() : nnue.eval<BLACK>();
+            int16_t eval = whoPlay == WHITE ? nnue.eval<WHITE>() : nnue.eval<BLACK>();
+            int16_t scale = currentState.halfMove / 4;
+            if (!scale)
+                scale = 1;
+
+            return eval / scale;
         }
 
         void load_from_fen(std::string fen){
