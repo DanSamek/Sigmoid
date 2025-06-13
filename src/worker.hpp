@@ -291,7 +291,7 @@ namespace Sigmoid {
             // Add bonus to a move, that did fail-low.
             const bool can_fail_low_bonus = best_move == Move::none() && (stack - 1)->movedPiece != NONE;
             if (!(stack - 1)->capture && can_fail_low_bonus){
-                const int bonus = std::min(50 * depth, 500);
+                const int bonus = std::min(30 * depth, 300);
                 update_continuation_histories_move(stack - 1, previous_move, bonus, (stack - 1)->movedPiece);
                 apply_gravity(mainHistory[!board.whoPlay][previous_move.from()][previous_move.to()], bonus, MainHistory::maxValue);
             }
