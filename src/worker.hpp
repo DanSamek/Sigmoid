@@ -321,10 +321,9 @@ namespace Sigmoid {
             MoveList<true> ml(&board);
             Move move;
 
-            const bool in_check = board.in_check();
             while ((move = ml.get()) != Move::none()){
                 
-                if (!in_check && !board.see(move, 0))
+                if (!board.see(move, 0))
                     continue;
 
                 if (!board.make_move(move))
