@@ -212,7 +212,7 @@ namespace Sigmoid {
                         continue;
 
                     // See pruning of quiet moves.
-                    if(depth <= 7 && alpha > -CHECKMATE_BOUND && !board.see(move, -80 * depth))
+                    if(!root_node && depth <= 7 && alpha > -CHECKMATE_BOUND && !board.see(move, -80 * depth))
                         continue;
                 }
 
