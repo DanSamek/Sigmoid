@@ -147,6 +147,8 @@ namespace Sigmoid {
                 return q_search(alpha, beta, stack);
 
             stack->can_null = (stack - 1)->can_null;
+            const Move previous_move = (stack - 1)->currentMove;
+
             const int16_t static_eval = stack->eval = board.eval();
             const bool in_check = board.in_check();
 
@@ -193,7 +195,7 @@ namespace Sigmoid {
             TTFlag flag = UPPER_BOUND;
             while ((move = ml.get()) != Move::none()){
 
-                const bool is_capture = board.is_capture(move);
+                const bool is_capture = stack->capture = board.is_capture(move);
                 stack->movedPiece = board.at(move.from());
                 stack->currentMove = move;
 
@@ -284,6 +286,14 @@ namespace Sigmoid {
 
                 if (is_capture && move != best_move)
                     capture_moves.emplace_back(move);
+            }
+
+            // Add bonus to a move, that did fail-low.
+            const bool can_fail_low_bonus = best_move == Move::none() && (stack - 1)->movedPiece != NONE;
+            if (!(stack - 1)->capture && can_fail_low_bonus){
+                const int bonus = std::min(50 * depth, 500);
+                update_continuation_histories_move(stack - 1, previous_move, bonus, (stack - 1)->movedPiece);
+                apply_gravity(mainHistory[!board.whoPlay][previous_move.from()][previous_move.to()], bonus, MainHistory::maxValue);
             }
 
             if (move_count == 0 && in_check)
