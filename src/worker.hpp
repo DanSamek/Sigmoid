@@ -240,6 +240,10 @@ namespace Sigmoid {
 
                     if (value < singular_beta)
                         extension = 1 + (!pv_node && value + 25 < singular_beta);
+
+                    // Multi-cut
+                    if (value >= beta)
+                        return value;
                 }
 
                 if (!board.make_move(move))
