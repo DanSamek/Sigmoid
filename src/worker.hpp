@@ -461,7 +461,7 @@ namespace Sigmoid {
 
             for (int depth = 1; depth <= MAX_PLY; depth++)
                 for (int mc = 1; mc <= MAX_POSSIBLE_MOVES; mc++)
-                    lmrTable[depth - 1][mc - 1] = int16_t((0.5 + log(depth) * log(mc) * 0.3) * 128);
+                    lmrTable[depth - 1][mc - 1] = int16_t((0.75 + log(depth) * log(mc) * 0.35) * 128);
 
             loadedLmr = true;
         }
