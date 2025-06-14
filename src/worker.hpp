@@ -405,13 +405,9 @@ namespace Sigmoid {
                     }
                 }
             }
-
-            if (best_move == Move::none() && in_check)
-                return -CHECKMATE + stack->ply;
-            else if (best_move == Move::none() == 0)
-                return DRAW;
-
-            tt->store(board.key(), best_move, tt_flag, 0, best_value, stack->ply);
+            
+            if (best_move != Move::none())
+                tt->store(board.key(), best_move, tt_flag, 0, best_value, stack->ply);
             return best_value;
         }
 
