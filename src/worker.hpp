@@ -239,7 +239,7 @@ namespace Sigmoid {
                     stack->excludedMove = Move::none();
 
                     if (value < singular_beta)
-                        extension = 1;
+                        extension = 1 + (!pv_node && value + 25 < singular_beta);
                 }
 
                 if (!board.make_move(move))
