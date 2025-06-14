@@ -242,7 +242,7 @@ namespace Sigmoid {
                         extension = 1 + (!pv_node && value + 25 < singular_beta);
 
                     // Multi-cut
-                    if (value >= beta)
+                    else if (value >= beta)
                         return value;
                 }
 
