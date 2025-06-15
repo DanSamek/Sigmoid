@@ -349,7 +349,7 @@ namespace Sigmoid {
                 alpha = best_value;
 
             auto[entry, tt_hit] = tt->probe(board.key());
-            MoveList<true> ml(&board, &entry.move, &captureHistory);
+            MoveList<true> ml(&board, &entry.move);
             Move move;
 
             const bool in_check = board.in_check();
