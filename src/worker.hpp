@@ -80,11 +80,10 @@ namespace Sigmoid {
                     eval = negamax<ROOT>(depth, alpha, beta, root);
 
                     if (eval <= alpha && eval > -CHECKMATE_BOUND){
-                        // beta = (eval + beta) / 2; todo try, if pass.
                         alpha -= delta;
+                        beta = (eval + beta) / 2;
                     }
                     else if (eval >= beta && eval < CHECKMATE_BOUND){
-                        // alpha = (eval + alpha) / 2; todo try, if pass.
                         beta += delta;
                     }
                     else{
