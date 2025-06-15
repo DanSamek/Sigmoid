@@ -28,6 +28,10 @@ namespace Sigmoid{
         value += clampedBonus - value * abs(clampedBonus) / limit;
     }
 
+    using KillerMoves = std::array<std::array<Move, 2>, MAX_PLY_P1>;
+    const int KILLER_BONUS_0 = 300'000;
+    const int KILLER_BONUS_1 = 200'000;
+
     const int MAX_CAP_HIST_BONUS = 30'000;
     // [from_pc][to_sq] [cap_pc]
     using CaptureHistory = History<MAX_CAP_HIST_BONUS, NUM_PIECES, NUM_SQUARES, NUM_PIECES>;
@@ -40,7 +44,7 @@ namespace Sigmoid{
     using ContinuationHistory = std::array<ContinuationHistoryEntry::type, CONT_HIST_MAX_PLY>;
 
     const int TT_MOVE_VALUE = 1'000'000;
-    const int QUIET_OFFSET = CaptureHistory::maxValue + MainHistory::maxValue + ContinuationHistoryEntry::maxValue * CONT_HIST_MAX_PLY;
+    const int QUIET_OFFSET = KILLER_BONUS_0 + MAX_CAP_HIST_BONUS + 1; // max. quiet + -MAX_CAP_HIST bonus
 }
 
 #endif //SIGMOID_HISTORY_HPP
