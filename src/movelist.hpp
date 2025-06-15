@@ -18,8 +18,11 @@ namespace Sigmoid {
                  const Move* ttMove,
                  const ContinuationHistory* continuationHistory,
                  const StackItem* stack,
-                 const CaptureHistory::type* captureHistory) : board(board), mainHistory(mainHistory), ttMove(ttMove),
-                                           continuationHistory(continuationHistory),stack(stack), captureHistory(captureHistory){}
+                 const CaptureHistory::type* captureHistory,
+                 const std::array<Move, 2>* killerMoves)
+                 : board(board), mainHistory(mainHistory), ttMove(ttMove),
+                   continuationHistory(continuationHistory), stack(stack),
+                   captureHistory(captureHistory), killerMoves(killerMoves){}
 
         MoveList(const Board* board) : board(board) {}
 
@@ -75,23 +78,32 @@ namespace Sigmoid {
                 else{
                     if (!mainHistory) continue;
 
-                    scores[i] = (*mainHistory)[board->whoPlay][move.from()][move.to()];
+                    if (killerMoves[stack->ply][0] == move)
+                        scores[i] = KILLER_BONUS_0;
 
-                    auto get_cont_ply_hist = [&]()->int{
-                        int cont_ply_hist_score = 0;
-                        for (int n_ply = 1; n_ply <= CONT_HIST_MAX_PLY; n_ply++){
-                            const Move& previous_move = (stack - n_ply)->currentMove;
-                            const Piece previous_moved_piece = (stack - n_ply)->movedPiece;
-                            if (previous_move == Move::none() || previous_move == Move::null())
-                                break;
+                    else if (killerMoves[stack->ply][1] == move)
+                        scores[i] = KILLER_BONUS_1;
 
-                            const Piece current_piece = board->at(move.from());
-                            int16_t entry = (*continuationHistory)[n_ply - 1][previous_moved_piece][previous_move.to()][current_piece][move.to()];
-                            cont_ply_hist_score += entry;
-                        }
-                        return cont_ply_hist_score;
-                    };
-                    scores[i] += get_cont_ply_hist();
+                    else {
+                        scores[i] = (*mainHistory)[board->whoPlay][move.from()][move.to()];
+
+                        auto get_cont_ply_hist = [&]() -> int {
+                            int cont_ply_hist_score = 0;
+                            for (int n_ply = 1; n_ply <= CONT_HIST_MAX_PLY; n_ply++) {
+                                const Move &previous_move = (stack - n_ply)->currentMove;
+                                const Piece previous_moved_piece = (stack - n_ply)->movedPiece;
+                                if (previous_move == Move::none() || previous_move == Move::null())
+                                    break;
+
+                                const Piece current_piece = board->at(move.from());
+                                int16_t entry =
+                                        (*continuationHistory)[n_ply -1][previous_moved_piece][previous_move.to()][current_piece][move.to()];
+                                cont_ply_hist_score += entry;
+                            }
+                            return cont_ply_hist_score;
+                        };
+                        scores[i] += get_cont_ply_hist();
+                    }
                 }
             }
         }
@@ -102,6 +114,7 @@ namespace Sigmoid {
         const ContinuationHistory* continuationHistory = nullptr;
         const StackItem* stack = nullptr;
         const CaptureHistory::type* captureHistory = nullptr;
+        const std::array<Move, 2>* killerMoves = nullptr;
 
         std::array<Move, MAX_POSSIBLE_MOVES> moves;
         std::array<int, MAX_POSSIBLE_MOVES> scores;

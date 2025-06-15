@@ -24,6 +24,7 @@ namespace Sigmoid {
         MainHistory::type mainHistory;
         ContinuationHistory continuationHistory;
         CaptureHistory::type captureHistory;
+        KillerMoves killerMoves;
 
         static inline std::array<std::array<int16_t, MAX_POSSIBLE_MOVES>, MAX_PLY> lmrTable;
         static inline bool loadedLmr = false;
@@ -57,6 +58,8 @@ namespace Sigmoid {
             for (int i = 0; i < MAX_PLY - 1; i++){
                 (root + i)->ply = i;
             }
+
+            reset_killers(root->ply);
 
             int16_t eval;
             for (int depth = 1; depth <= searchDepth; depth++){
@@ -151,8 +154,9 @@ namespace Sigmoid {
             stack->can_null = (stack - 1)->can_null;
             const int16_t static_eval = stack->eval = board.eval();
             const bool in_check = board.in_check();
-
             const bool improving = stack->eval > (stack - 2)->eval;
+
+            reset_killers(stack->ply + 1);
 
             if (!in_check && !is_singular) {
                 // Reverse futility pruning.
@@ -183,8 +187,9 @@ namespace Sigmoid {
                 }
             }
 
+            MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory,
+                               stack, &captureHistory, &killerMoves[stack->ply]);
 
-            MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory, stack, &captureHistory);
             Move move;
             int move_count = 0;
             Move best_move = Move::none();
@@ -304,9 +309,11 @@ namespace Sigmoid {
                     if (value >= beta){
                         flag = LOWER_BOUND;
 
+                        assert(best_move == move);
                         if (!is_capture) {
                             update_continuation_histories(stack, best_move, quiet_moves, depth);
                             update_quiet_histories(best_move, quiet_moves, depth);
+                            store_killer_move(stack->ply, best_move);
                         }
                         else{
                             update_capture_history(best_move, capture_moves, depth);
@@ -436,6 +443,15 @@ namespace Sigmoid {
             for (const Move& move: captureMoves) {
                 update_capture_history(move, -bonus);
             }
+        }
+
+        void store_killer_move(int ply, const Move& move){
+            killerMoves[ply][1] = killerMoves[ply][0];
+            killerMoves[ply][0] = move;
+        }
+
+        void reset_killers(int ply){
+            killerMoves[ply][0] = killerMoves[ply][1] = Move::none();
         }
 
         void prepare_for_search(){
