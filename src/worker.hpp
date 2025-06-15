@@ -267,7 +267,7 @@ namespace Sigmoid {
                         reduction -= 128;
 
                     if (!is_capture && tt_capture)
-                        reduction += 64;
+                        reduction += 128;
 
                     if (!improving)
                         reduction += 64;
