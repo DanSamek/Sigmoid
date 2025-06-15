@@ -155,6 +155,14 @@ namespace Sigmoid {
             const bool improving = stack->eval > (stack - 2)->eval;
 
             if (!in_check && !is_singular) {
+
+                // Razoring.
+                if (depth <= 5 && static_eval + 200 + 130 * depth <= alpha){
+                    int16_t value = q_search(alpha - 1, alpha, stack);
+                    if (value <= alpha)
+                        return value;
+                }
+
                 // Reverse futility pruning.
                 // If eval is really good, that even with big margin beats beta, return static eval.
                 if (!pv_node && depth <= 8 && static_eval >= beta + 100 * depth)
