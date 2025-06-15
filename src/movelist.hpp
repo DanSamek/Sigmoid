@@ -21,6 +21,11 @@ namespace Sigmoid {
                  const CaptureHistory::type* captureHistory) : board(board), mainHistory(mainHistory), ttMove(ttMove),
                                            continuationHistory(continuationHistory),stack(stack), captureHistory(captureHistory){}
 
+        MoveList(const Board* board,
+                 const Move* ttMove,
+                 const CaptureHistory::type* captureHistory)
+                 : board(board), ttMove(ttMove), captureHistory(captureHistory){}
+
         MoveList(const Board* board) : board(board) {}
 
 
