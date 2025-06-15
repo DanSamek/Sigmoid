@@ -157,7 +157,7 @@ namespace Sigmoid {
             if (!in_check && !is_singular) {
 
                 // Razoring.
-                if (depth <= 5 && static_eval + 200 + 130 * depth <= alpha){
+                if (depth <= 5 && static_eval + 230 + 200 * depth <= alpha){
                     int16_t value = q_search(alpha, beta, stack);
                     if (value <= alpha)
                         return value;
