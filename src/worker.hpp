@@ -155,6 +155,7 @@ namespace Sigmoid {
             const int16_t static_eval = stack->eval = board.eval();
             const bool in_check = board.in_check();
             const bool improving = stack->eval > (stack - 2)->eval;
+            const bool tt_pv = tt_hit && pv_node;
 
             reset_killers(stack->ply + 1);
 
@@ -271,6 +272,9 @@ namespace Sigmoid {
 
                     if (!improving)
                         reduction += 64;
+
+                    if (tt_pv)
+                        reduction -= 128;
 
                     reduction /= 128; // Scaling to a depth.
                     reduction = std::clamp((int)reduction, 0, new_depth - 2);
