@@ -246,7 +246,7 @@ namespace Sigmoid {
                     if (value < singular_beta) {
                         extension = 1;
                         extension += !pv_node && value + 25 < singular_beta;
-                        extension += !pv_node && !is_capture && value + 150 < singular_beta;
+                        extension += !pv_node && value + 150 < singular_beta;
                     }
 
                     else if (entry.eval >= beta)
