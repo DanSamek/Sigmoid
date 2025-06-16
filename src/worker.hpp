@@ -189,7 +189,7 @@ namespace Sigmoid {
                 // Probcut
                 const int pb_bound = beta + 300;
                 if (!root_node && depth >= 6 && entry.depth >= depth + 3
-                    && entry.eval >= pb_bound) {
+                    && entry.eval >= pb_bound && beta > -CHECKMATE_BOUND && beta < CHECKMATE_BOUND) {
 
                     MoveList<true> ml(&board, &entry.move);
                     Move move;
