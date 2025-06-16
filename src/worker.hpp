@@ -187,14 +187,13 @@ namespace Sigmoid {
                 }
 
                 // Probcut
-                const int pb_bound = beta + 300;
+                const int pc_beta = beta + 300;
                 if (!root_node && depth >= 6 && entry.depth >= depth + 3
-                    && entry.eval >= pb_bound && beta > -CHECKMATE_BOUND && beta < CHECKMATE_BOUND) {
+                    && entry.eval >= pc_beta && beta > -CHECKMATE_BOUND && beta < CHECKMATE_BOUND) {
 
                     MoveList<true> ml(&board, &entry.move);
                     Move move;
-                    const int pb_depth = depth - 5;
-                    const int pb_beta = (beta + entry.eval) / 2 + 300;
+                    const int pc_depth = depth - 5;
 
                     while ((move = ml.get()) != Move::none()){
 
@@ -204,10 +203,10 @@ namespace Sigmoid {
                         if (!board.make_move(move))
                             continue;
 
-                        const int value = -negamax<NONPV>(pb_depth, -pb_beta, -pb_beta + 1, stack + 1);
+                        const int value = -negamax<NONPV>(pc_depth, -pc_beta, -pc_beta + 1, stack + 1);
                         board.undo_move();
 
-                        if (value >= pb_beta)
+                        if (value >= pc_beta)
                             return value;
                     }
                 }
