@@ -419,7 +419,7 @@ namespace Sigmoid {
                 if (previous_move == Move::none() || previous_move == Move::null())
                     break;
 
-                int& entry = continuationHistory[n_ply - 1][previous_piece][previous_move.to()][movedPiece][move.to()];
+                int& entry = continuationHistory[n_ply - 1][board.whoPlay][previous_piece][previous_move.to()][movedPiece][move.to()];
                 apply_gravity(entry, bonus, ContinuationHistoryEntry::maxValue);
             }
         }
@@ -461,11 +461,12 @@ namespace Sigmoid {
                         to = 0;
 
             for (auto& n_ply : continuationHistory)
-                for (auto& prev_from: n_ply)
-                    for (auto& prev_to: prev_from)
-                        for (auto& curr_from: prev_to)
-                            for (auto& curr_to: curr_from)
-                                curr_to = 0;
+                for (auto& color : n_ply)
+                    for (auto& prev_from: color)
+                        for (auto& prev_to: prev_from)
+                            for (auto& curr_from: prev_to)
+                                for (auto& curr_to: curr_from)
+                                    curr_to = 0;
 
             for (auto& pc: captureHistory)
                 for (auto& square: pc)
