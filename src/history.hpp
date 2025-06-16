@@ -43,7 +43,7 @@ namespace Sigmoid{
     // [prev_pc][prev_to_sq] [pc][to_sq]
     using ContinuationHistoryEntry = History<MAX_CONT_HIST_BONUS, NUM_PIECES, NUM_SQUARES, NUM_PIECES, NUM_SQUARES>;
     using ContinuationHistory = std::array<ContinuationHistoryEntry::type, CONT_HIST_MAX_PLY>;
-    const std::array<int, 3> CONT_PLY_IDX_SCALES[2] = {{1, 0, 128}, {2, 1, 128}};
+    const std::array<int, 3> CONT_PLY_IDX_SCALES[2] = {{1, 0, 128}, {2, 1, 64}};
     const std::array<int, 2> CONT_PLY_IDX[2] = {{1, 0}, {2, 1}};
 
     const int TT_MOVE_VALUE = 1'000'000;
