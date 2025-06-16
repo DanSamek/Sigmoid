@@ -155,6 +155,7 @@ namespace Sigmoid {
             const int16_t static_eval = stack->eval = board.eval();
             const bool in_check = board.in_check();
             const bool improving = stack->eval > (stack - 2)->eval;
+            const bool tt_pv = tt_hit && pv_node;
 
             reset_killers(stack->ply + 1);
 
@@ -263,7 +264,7 @@ namespace Sigmoid {
                 if (new_depth >= 3 && !root_node){
                     reduction = lmrTable[new_depth - 1][move_count - 1];
 
-                    if (pv_node)
+                    if (tt_pv)
                         reduction -= 128;
 
                     if (!is_capture && tt_capture)
