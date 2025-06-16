@@ -323,11 +323,13 @@ namespace Sigmoid {
                     }
                 }
 
-                if (!is_capture && move != best_move)
-                    quiet_moves.emplace_back(move);
+                if (move_count <= 32) {
+                    if (!is_capture && move != best_move)
+                        quiet_moves.emplace_back(move);
 
-                if (is_capture && move != best_move)
-                    capture_moves.emplace_back(move);
+                    if (is_capture && move != best_move)
+                        capture_moves.emplace_back(move);
+                }
             }
 
             if (move_count == 0 && in_check)
