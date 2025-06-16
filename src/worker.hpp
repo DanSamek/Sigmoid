@@ -331,7 +331,7 @@ namespace Sigmoid {
             }
 
             if (move_count == 0 && in_check)
-                return -CHECKMATE + stack->ply;
+                return is_singular ? alpha : -CHECKMATE + stack->ply;
             else if (move_count == 0)
                 return DRAW;
 
