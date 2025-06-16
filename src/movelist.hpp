@@ -26,6 +26,8 @@ namespace Sigmoid {
 
         MoveList(const Board* board) : board(board) {}
 
+        MoveList(const Board* board, const Move* ttMove) : board(board), ttMove(ttMove) {}
+
 
         Move get(){
             if (!generated){
