@@ -75,7 +75,7 @@ namespace Sigmoid {
                     continue;
                 }
 
-                int16_t delta = 20;
+                int16_t delta = 8;
                 int16_t alpha = std::max(MIN_VALUE, (int16_t)(eval - delta));
                 int16_t beta = std::min(MAX_VALUE, (int16_t)(eval + delta));
 
@@ -83,11 +83,10 @@ namespace Sigmoid {
                     eval = negamax<ROOT>(depth, alpha, beta, root);
 
                     if (eval <= alpha && eval > -CHECKMATE_BOUND){
-                        // beta = (eval + beta) / 2; todo try, if pass.
                         alpha -= delta;
+                        // beta = (eval + beta) / 2;
                     }
                     else if (eval >= beta && eval < CHECKMATE_BOUND){
-                        // alpha = (eval + alpha) / 2; todo try, if pass.
                         beta += delta;
                     }
                     else{
@@ -99,7 +98,7 @@ namespace Sigmoid {
                     }
 
                     delta *= 2;
-                    if (delta >= 1000){
+                    if (delta >= 512) {
                         alpha = MIN_VALUE;
                         beta = MAX_VALUE;
                     }
