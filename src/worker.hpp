@@ -333,7 +333,7 @@ namespace Sigmoid {
             const Move previous_move = (stack - 1)->currentMove;
             if (is_valid(previous_move) && best_move == Move::none()
                 && !board.is_capture(previous_move)) {
-                const int bonus = std::min(30 * depth, 300);
+                const int bonus = std::min(20 * depth, 200);
                 apply_gravity(mainHistory[~board.whoPlay][previous_move.from()][previous_move.to()], bonus, MainHistory::maxValue);
             }
 
