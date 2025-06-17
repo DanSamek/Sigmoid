@@ -162,7 +162,7 @@ namespace Sigmoid {
                 // Reverse futility pruning.
                 // If eval is really good, that even with big margin beats beta, return static eval.
                 if (!pv_node && depth <= 8 && static_eval >= beta + 100 * depth)
-                    return static_eval;
+                    return (static_eval + beta) / 2;
 
                 // Null move pruning.
                 const bool some_piece = board.some_big_piece();
