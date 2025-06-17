@@ -41,8 +41,10 @@ namespace Sigmoid {
             if (eval >= CHECKMATE_BOUND) eval += ply;
             else if (eval <= -CHECKMATE_BOUND) eval -= ply;
             const int index = get_index(key);
-            // For now always replace.
-            entries[index] = {key, move, flag, depth, eval};
+            Entry& entry = entries[index];
+
+            if (entry.key != key || depth > entry.depth || flag == EXACT)
+                entry = {key, move, flag, depth, eval};
         }
 
         void prefetch(uint64_t key){
