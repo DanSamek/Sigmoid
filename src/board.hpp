@@ -369,8 +369,6 @@ namespace Sigmoid {
             return false;
         }
 
-        static constexpr int SEE_VALUES[6] = {100, 300, 300, 500, 900, 0};
-
         [[nodiscard]] bool see(const Sigmoid::Move &move, int threshold) const {
             const int from = move.from();
             const int to = move.to();
