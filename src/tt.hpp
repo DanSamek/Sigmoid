@@ -19,7 +19,7 @@ namespace Sigmoid {
         TTFlag flag;
         int8_t depth = 0;
         int16_t eval = 0;
-        bool in_pv   = false;
+        bool inPv    = false;
     };
 
     struct TranspositionTable {

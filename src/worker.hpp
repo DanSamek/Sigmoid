@@ -129,7 +129,7 @@ namespace Sigmoid {
 
             auto [entry, tt_hit] = tt->probe(board.key());
             const bool tt_capture = tt_hit && board.is_capture(entry.move);
-            const bool tt_pv = tt_hit && entry.in_pv;
+            const bool tt_pv = tt_hit && entry.inPv;
 
             if (!pv_node && tt_hit && entry.depth >= depth && !is_singular){
 
