@@ -19,6 +19,7 @@ namespace Sigmoid {
         TTFlag flag;
         int8_t depth = 0;
         int16_t eval = 0;
+        bool in_pv   = false;
     };
 
     struct TranspositionTable {
@@ -37,14 +38,14 @@ namespace Sigmoid {
             std::fill(entries, entries + numberOfEntries, Entry{});
         }
 
-        void store(uint64_t key, const Move& move, TTFlag flag, int8_t depth, int16_t eval, int16_t ply){
+        void store(uint64_t key, const Move& move, TTFlag flag, int8_t depth, int16_t eval, int16_t ply, bool inPv){
             if (eval >= CHECKMATE_BOUND) eval += ply;
             else if (eval <= -CHECKMATE_BOUND) eval -= ply;
             const int index = get_index(key);
             Entry& entry = entries[index];
 
             if (entry.key != key || depth > entry.depth || flag == EXACT)
-                entry = {key, move, flag, depth, eval};
+                entry = {key, move, flag, depth, eval, inPv};
         }
 
         void prefetch(uint64_t key){
