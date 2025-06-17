@@ -312,7 +312,7 @@ namespace Sigmoid {
                         assert(best_move == move);
                         if (!is_capture) {
                             update_continuation_histories(stack, best_move, quiet_moves, depth);
-                            update_quiet_histories(best_move, quiet_moves, depth);
+                            update_main_history(best_move, quiet_moves, depth);
                             store_killer_move(stack->ply, best_move);
                         }
                         else{
@@ -328,6 +328,13 @@ namespace Sigmoid {
 
                 if (is_capture && move != best_move)
                     capture_moves.emplace_back(move);
+            }
+
+            const Move previous_move = (stack - 1)->currentMove;
+            if (is_valid(previous_move) && best_move == Move::none()
+                && !board.is_capture(previous_move)) {
+                const int bonus = std::min(60 * depth, 480);
+                apply_gravity(mainHistory[~board.whoPlay][previous_move.from()][previous_move.to()], bonus, MainHistory::maxValue);
             }
 
             if (move_count == 0 && in_check)
@@ -389,7 +396,12 @@ namespace Sigmoid {
             return best_value;
         }
 
-        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
+
+        [[nodiscard]] bool is_valid(const Move& move){
+            return move != Move::none() && move != Move::null();
+        }
+
+        void update_main_history(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
             int bonus = std::min(150 * depth, 1650);
             apply_gravity(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], bonus, MainHistory::maxValue);
 
