@@ -43,7 +43,7 @@ namespace Sigmoid {
             const int index = get_index(key);
             Entry& entry = entries[index];
 
-            if (entry.key != key || depth > entry.depth)
+            if (entry.key != key || depth > entry.depth || flag == EXACT)
                 entry = {key, move, flag, depth, eval};
         }
 
