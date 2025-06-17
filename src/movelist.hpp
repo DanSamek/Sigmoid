@@ -68,7 +68,12 @@ namespace Sigmoid {
                     Piece from_piece = board->at(move.from());
                     scores[i] = QUIET_OFFSET;
                     scores[i] += ((captured_piece + 1) * 100) * (KING - from_piece + 1);
-                    if (captureHistory){
+
+                    // Bad captures.
+                    if (!board->see(move, -SEE_VALUES[PAWN]))
+                        scores[i] = -1'000'000;
+
+                    else if (captureHistory){
                         Piece moved_piece = board->at(move.from());
                         int to_square = move.to();
 
