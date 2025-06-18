@@ -64,7 +64,7 @@ namespace Sigmoid {
             int16_t eval;
             for (int depth = 1; depth <= searchDepth; depth++){
                 if (depth <= 5){
-                    eval = negamax<ROOT>(depth, MIN_VALUE, MAX_VALUE, root);
+                    eval = negamax<ROOT>(depth, MIN_VALUE, MAX_VALUE, root, false);
 
                     if (is_time_out())
                         break;
@@ -80,7 +80,7 @@ namespace Sigmoid {
                 int16_t beta = std::min(MAX_VALUE, (int16_t)(eval + delta));
 
                 while (true){
-                    eval = negamax<ROOT>(depth, alpha, beta, root);
+                    eval = negamax<ROOT>(depth, alpha, beta, root, false);
 
                     if (eval <= alpha && eval > -CHECKMATE_BOUND){
                         // beta = (eval + beta) / 2; todo try, if pass.
@@ -111,7 +111,7 @@ namespace Sigmoid {
         }
 
         template<NodeType nodeType>
-        int16_t negamax(int depth, int16_t alpha, int16_t beta, StackItem* stack) {
+        int16_t negamax(int depth, int16_t alpha, int16_t beta, StackItem* stack, bool cutNode) {
             constexpr bool root_node = nodeType == ROOT;
             constexpr bool pv_node = nodeType != NONPV;
             result.nodesVisited++;
@@ -177,7 +177,7 @@ namespace Sigmoid {
                     stack->movedPiece = NONE;
 
                     board.make_null_move();
-                    const int16_t value = -negamax<NONPV>(nmp_depth, -beta, -beta + 1, stack + 1);
+                    const int16_t value = -negamax<NONPV>(nmp_depth, -beta, -beta + 1, stack + 1, !cutNode);
                     board.undo_null_move();
 
                     stack->can_null = true;
@@ -240,13 +240,15 @@ namespace Sigmoid {
                     const int singular_depth = (depth - 1) / 2;
 
                     stack->excludedMove = move;
-                    const int16_t value = negamax<NONPV>(singular_depth, singular_beta - 1, singular_beta, stack);
+                    const int16_t value = negamax<NONPV>(singular_depth, singular_beta - 1, singular_beta, stack, cutNode);
                     stack->excludedMove = Move::none();
 
                     if (value < singular_beta)
                         extension = 1 + (!pv_node && value + 25 < singular_beta);
 
                     else if (entry.eval >= beta)
+                        extension = -1;
+                    else if (cutNode)
                         extension = -1;
                 }
 
@@ -274,17 +276,17 @@ namespace Sigmoid {
                     reduction /= 128; // Scaling to a depth.
                     reduction = std::clamp((int)reduction, 0, new_depth - 2);
 
-                    value = -negamax<NONPV>(new_depth - reduction, -alpha - 1, -alpha, stack + 1);
+                    value = -negamax<NONPV>(new_depth - reduction, -alpha - 1, -alpha, stack + 1, true);
 
                     if (value > alpha && reduction)
-                        value = -negamax<NONPV>(new_depth, -alpha - 1, -alpha, stack + 1);
+                        value = -negamax<NONPV>(new_depth, -alpha - 1, -alpha, stack + 1, !cutNode);
                 }
 
                 else if (!pv_node || move_count > 1)
-                    value = -negamax<NONPV>(new_depth, -alpha - 1, -alpha, stack + 1);
+                    value = -negamax<NONPV>(new_depth, -alpha - 1, -alpha, stack + 1, !cutNode);
 
                 if (pv_node && (move_count == 1 || value > alpha))
-                    value = -negamax<PV>(new_depth, -beta, -alpha, stack + 1);
+                    value = -negamax<PV>(new_depth, -beta, -alpha, stack + 1, false);
 
                 board.undo_move();
 
