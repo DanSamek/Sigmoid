@@ -343,14 +343,14 @@ namespace Sigmoid {
 
         //template<NodeType nodeType>
         int16_t q_search(int16_t alpha, int16_t beta, StackItem* stack) {
-            int16_t best_value = board.eval();
+            int16_t static_eval = board.eval();
             if (stack->ply >= MAX_PLY)
-                return best_value;
+                return static_eval;
 
-            if (best_value >= beta)
-                return best_value;
-            if (best_value > alpha)
-                alpha = best_value;
+            if (static_eval >= beta)
+                return static_eval;
+            if (static_eval > alpha)
+                alpha = static_eval;
 
             if (result.nodesVisited & 2048 && is_time_out())
                 return MIN_VALUE;
@@ -358,10 +358,17 @@ namespace Sigmoid {
             MoveList<true> ml(&board);
             Move move;
 
+            int16_t best_value = static_eval;
             const bool in_check = board.in_check();
             while ((move = ml.get()) != Move::none()){
-                
+
+                // See pruning.
                 if (!in_check && !board.see(move, 0))
+                    continue;
+
+                // Futility pruning.
+                if (!in_check && alpha > -CHECKMATE_BOUND
+                    && static_eval + 400 <= alpha && !board.see(move, 1))
                     continue;
 
                 if (!board.make_move(move))
