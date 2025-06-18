@@ -259,9 +259,9 @@ namespace Sigmoid {
                 int16_t value;
                 int16_t reduction = 0;
 
-                int new_depth = depth + extension;
-                if (new_depth >= 3 && !root_node){
-                    reduction = lmrTable[new_depth - 1][move_count - 1];
+                const int new_depth = depth - 1 + extension;
+                if (depth >= 3 && !root_node && move_count > 3){
+                    reduction = lmrTable[depth - 1][move_count - 1];
                     if (pv_node)
                         reduction -= 128;
 
@@ -274,17 +274,17 @@ namespace Sigmoid {
                     reduction /= 128; // Scaling to a depth.
                     reduction = std::clamp((int)reduction, 0, new_depth - 2);
 
-                    value = -negamax<NONPV>(new_depth - 1 - reduction, -alpha - 1, -alpha, stack + 1);
+                    value = -negamax<NONPV>(new_depth - reduction, -alpha - 1, -alpha, stack + 1);
 
                     if (value > alpha && reduction)
-                        value = -negamax<NONPV>(new_depth - 1, -alpha - 1, -alpha, stack + 1);
+                        value = -negamax<NONPV>(new_depth, -alpha - 1, -alpha, stack + 1);
                 }
-                
+
                 else if (!pv_node || move_count > 1)
-                    value = -negamax<NONPV>(new_depth - 1, -alpha - 1, -alpha, stack + 1);
+                    value = -negamax<NONPV>(new_depth, -alpha - 1, -alpha, stack + 1);
 
                 if (pv_node && (move_count == 1 || value > alpha))
-                    value = -negamax<PV>(new_depth - 1, -beta, -alpha, stack + 1);
+                    value = -negamax<PV>(new_depth, -beta, -alpha, stack + 1);
 
                 board.undo_move();
 
