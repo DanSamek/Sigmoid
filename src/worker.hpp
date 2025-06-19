@@ -274,7 +274,7 @@ namespace Sigmoid {
                         reduction += 64;
 
                     if (cutNode)
-                        reduction += 64;
+                        reduction += 192;
 
                     reduction /= 128; // Scaling to a depth.
                     reduction = std::clamp((int)reduction, 0, new_depth - 2);
