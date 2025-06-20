@@ -188,7 +188,7 @@ namespace Sigmoid {
             }
             
             // IIR
-            if (!root_node && depth >= 5 && !tt_hit)
+            if (!root_node && pv_node && depth >= 5 && !tt_hit)
                 depth--;
 
             MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory,
