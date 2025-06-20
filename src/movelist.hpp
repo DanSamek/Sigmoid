@@ -109,6 +109,9 @@ namespace Sigmoid {
                         };
                         scores[i] += get_cont_ply_hist();
                     }
+
+                    const int promo_bonus = move.is_promotion() ? move.promo_piece() * 100 : 0;
+                    scores[i] += promo_bonus;
                 }
             }
         }
