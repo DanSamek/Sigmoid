@@ -149,7 +149,7 @@ namespace Sigmoid {
             }
 
             if (depth <= 0)
-                return q_search(alpha, beta, stack);
+                return q_search<nodeType>(alpha, beta, stack);
 
             stack->can_null = (stack - 1)->can_null;
             const int16_t static_eval = stack->eval = board.eval();
@@ -343,20 +343,42 @@ namespace Sigmoid {
             return best_value;
         }
 
-        //template<NodeType nodeType>
+        template<NodeType nodeType>
         int16_t q_search(int16_t alpha, int16_t beta, StackItem* stack) {
+            constexpr bool pv_node = nodeType == PV;
+
+            if (result.nodesVisited & 2048 && is_time_out())
+                return MIN_VALUE;
+
             int16_t best_value = board.eval();
             if (stack->ply >= MAX_PLY)
                 return best_value;
+
+            auto [entry, tt_hit] = tt->probe(board.key());
+            if (tt_hit && !pv_node){
+                auto correct_tt_eval = [&stack](int16_t eval)-> int16_t {
+                    auto abs_eval = std::abs(eval);
+                    if(abs_eval >= CHECKMATE_BOUND)
+                        eval -= stack->ply * (abs_eval/eval);
+                    return eval;
+                };
+                int16_t corrected_eval = correct_tt_eval(entry.eval);
+
+                if (entry.flag == EXACT)
+                    return corrected_eval;
+
+                else if (entry.flag == UPPER_BOUND && entry.eval <= alpha)
+                    return corrected_eval;
+
+                else if (entry.flag == LOWER_BOUND && entry.eval >= beta)
+                    return corrected_eval;
+            }
 
             if (best_value >= beta)
                 return best_value;
             if (best_value > alpha)
                 alpha = best_value;
-
-            if (result.nodesVisited & 2048 && is_time_out())
-                return MIN_VALUE;
-
+            
             MoveList<true> ml(&board);
             Move move;
 
@@ -370,7 +392,7 @@ namespace Sigmoid {
                     continue;
 
                 result.nodesVisited++;
-                int16_t value = static_cast<int16_t>(-q_search(-beta, -alpha, stack + 1));
+                int16_t value = static_cast<int16_t>(-q_search<nodeType>(-beta, -alpha, stack + 1));
 
                 board.undo_move();
 
