@@ -167,7 +167,7 @@ namespace Sigmoid {
                 // Null move pruning.
                 const bool some_piece = board.some_big_piece();
                 if (!pv_node && depth >= 3 && stack->can_null && some_piece
-                    && static_eval >= beta + 50 * depth){
+                    && static_eval >= beta){
 
                     int16_t reduction = 3 + depth / 3;
                     int16_t nmp_depth = std::max(depth - reduction, 1);
