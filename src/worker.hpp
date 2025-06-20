@@ -152,8 +152,15 @@ namespace Sigmoid {
                 return q_search(alpha, beta, stack);
 
             stack->can_null = (stack - 1)->can_null;
-            const int16_t static_eval = stack->eval = board.eval();
             const bool in_check = board.in_check();
+
+            int16_t static_eval;
+            // Use TT eval instead of static eval.
+            if (tt_hit && entry.flag == EXACT)
+                static_eval = stack->eval = entry.eval;
+            else
+                static_eval = stack->eval = board.eval();
+
             const bool improving = stack->eval > (stack - 2)->eval;
 
             reset_killers(stack->ply + 1);
