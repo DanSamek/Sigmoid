@@ -152,8 +152,13 @@ namespace Sigmoid {
                 return q_search(alpha, beta, stack);
 
             stack->can_null = (stack - 1)->can_null;
-            const int16_t static_eval = stack->eval = board.eval();
             const bool in_check = board.in_check();
+            int16_t static_eval;
+            if (in_check && stack->ply > 2)
+                static_eval = stack->eval = (stack - 2)->eval;
+            else
+                static_eval = stack->eval = board.eval();
+
             const bool improving = stack->eval > (stack - 2)->eval;
 
             reset_killers(stack->ply + 1);
