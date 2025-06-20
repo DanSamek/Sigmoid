@@ -314,7 +314,7 @@ namespace Sigmoid {
                         assert(best_move == move);
                         if (!is_capture) {
                             update_continuation_histories(stack, best_move, quiet_moves, depth);
-                            update_quiet_histories(best_move, quiet_moves, depth);
+                            update_main_history(best_move, quiet_moves, depth);
                             store_killer_move(stack->ply, best_move);
                         }
                         else{
@@ -391,7 +391,7 @@ namespace Sigmoid {
             return best_value;
         }
 
-        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
+        void update_main_history(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
             int bonus = std::min(150 * depth, 1650);
             apply_gravity(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], bonus, MainHistory::maxValue);
 
@@ -415,14 +415,15 @@ namespace Sigmoid {
         void update_continuation_histories_move(const StackItem* stack, const Move& move, int bonus, const Piece movedPiece){
             assert(movedPiece != NONE);
 
-            for (int n_ply = 1; n_ply <= CONT_HIST_MAX_PLY; n_ply++){
-                const Move& previous_move = (stack - n_ply)->currentMove;
-                const Piece previous_piece = (stack - n_ply)->movedPiece;
+            for (const auto [ply, idx, scale] : CONT_PLY_IDX_SCALES){
+                const Move& previous_move = (stack - ply)->currentMove;
+                const Piece previous_piece = (stack - ply)->movedPiece;
                 if (previous_move == Move::none() || previous_move == Move::null())
                     break;
 
-                int& entry = continuationHistory[n_ply - 1][previous_piece][previous_move.to()][movedPiece][move.to()];
-                apply_gravity(entry, bonus, ContinuationHistoryEntry::maxValue);
+                int& entry = continuationHistory[idx][previous_piece][previous_move.to()][movedPiece][move.to()];
+                const int scaled_bonus = (scale * bonus) / BONUS_SCALE;
+                apply_gravity(entry, scaled_bonus, ContinuationHistoryEntry::maxValue);
             }
         }
 
