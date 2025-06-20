@@ -158,6 +158,10 @@ namespace Sigmoid {
 
             reset_killers(stack->ply + 1);
 
+            // IIR
+            if (!root_node && entry.move == Move::none() && depth >= 5)
+                depth--;
+
             if (!in_check && !is_singular) {
                 // Reverse futility pruning.
                 // If eval is really good, that even with big margin beats beta, return static eval.
