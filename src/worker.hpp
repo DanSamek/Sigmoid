@@ -157,6 +157,10 @@ namespace Sigmoid {
             const bool improving = stack->eval > (stack - 2)->eval;
 
             reset_killers(stack->ply + 1);
+            
+            // IIR
+            if (!root_node && depth >= 5 && !tt_hit)
+                depth--;
 
             if (!in_check && !is_singular) {
                 // Reverse futility pruning.
@@ -186,10 +190,6 @@ namespace Sigmoid {
                         return value;
                 }
             }
-            
-            // IIR
-            if (!root_node && pv_node && depth >= 5 && !tt_hit)
-                depth--;
 
             MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory,
                                stack, &captureHistory, &killerMoves[stack->ply]);
