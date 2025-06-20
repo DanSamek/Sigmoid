@@ -185,6 +185,34 @@ namespace Sigmoid {
                     if (value >= beta)
                         return value;
                 }
+
+                // Probcut
+                const int probcut_beta = beta + 300;
+                if (!pv_node && depth >= 5 && std::abs(beta) < CHECKMATE_BOUND
+                    && entry.eval >= probcut_beta && entry.flag != UPPER_BOUND && entry.depth + 3 >= depth) {
+                    MoveList<true> ml(&board);
+                    Move move;
+                    const int probcut_depth = depth - 5;
+
+                    while ((move = ml.get()) != Move::none()){
+
+                        stack->movedPiece = board.at(move.from());
+                        stack->currentMove = move;
+
+                        if (!board.make_move(move))
+                            continue;
+
+                        int16_t value = -q_search(-probcut_beta - 1, -probcut_beta, stack + 1);
+                        if (value >= probcut_beta && probcut_depth)
+                            value = -negamax<NONPV>(probcut_depth, -probcut_beta - 1, -probcut_beta, stack + 1, !cutNode);
+
+                        board.undo_move();
+
+                        if (value >= probcut_beta)
+                            return value;
+                    }
+                }
+
             }
 
             MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory,
