@@ -51,9 +51,13 @@ namespace Sigmoid {
             __builtin_prefetch(&entries[get_index(key)]);
         }
 
-        std::pair<const Entry&, bool> probe(uint64_t key){
+        std::pair<Entry, bool> probe(uint64_t key){
             const int index = get_index(key);
-            return {entries[index], entries[index].key == key};
+            Entry entry = entries[index];
+
+            const bool tt_hit = entries[index].key == key;
+            entry.move = tt_hit ? entry.move : Move::none();
+            return {entry, tt_hit};
         }
 
         inline int get_index(const uint64_t& key){
