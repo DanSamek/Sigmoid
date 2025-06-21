@@ -345,21 +345,24 @@ namespace Sigmoid {
 
         //template<NodeType nodeType>
         int16_t q_search(int16_t alpha, int16_t beta, StackItem* stack) {
-            int16_t best_value = board.eval();
-            if (stack->ply >= MAX_PLY)
-                return best_value;
-
-            if (best_value >= beta)
-                return best_value;
-            if (best_value > alpha)
-                alpha = best_value;
-
             if (result.nodesVisited & 2048 && is_time_out())
                 return MIN_VALUE;
 
-            MoveList<true> ml(&board);
+            int16_t static_eval = board.eval();
+            if (stack->ply >= MAX_PLY)
+                return static_eval;
+
+            const auto [entry, tt_hit] = tt->probe(board.key());
+
+            if (static_eval >= beta)
+                return static_eval;
+            if (static_eval > alpha)
+                alpha = static_eval;
+
+            MoveList<true> ml(&board, &entry.move, &captureHistory);
             Move move;
 
+            int16_t best_value = static_eval;
             const bool in_check = board.in_check();
             while ((move = ml.get()) != Move::none()){
                 
@@ -369,6 +372,7 @@ namespace Sigmoid {
                 if (!board.make_move(move))
                     continue;
 
+                tt->prefetch(board.key());
                 result.nodesVisited++;
                 int16_t value = static_cast<int16_t>(-q_search(-beta, -alpha, stack + 1));
 
