@@ -252,7 +252,7 @@ namespace Sigmoid {
                     else if (entry.eval >= beta)
                         extension = -1;
                     else if (cutNode)
-                        extension = -1;
+                        extension = -2;
                 }
 
                 if (!board.make_move(move))
