@@ -159,6 +159,9 @@ namespace Sigmoid {
             reset_killers(stack->ply + 1);
 
             if (!in_check && !is_singular) {
+                if ((pv_node || cutNode) && depth >= 5 && !tt_hit)
+                    depth--;
+
                 // Reverse futility pruning.
                 // If eval is really good, that even with big margin beats beta, return static eval.
                 if (!pv_node && depth <= 8 && static_eval >= beta + 100 * depth)
