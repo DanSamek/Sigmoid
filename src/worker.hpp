@@ -129,6 +129,7 @@ namespace Sigmoid {
 
             auto [entry, tt_hit] = tt->probe(board.key());
             const bool tt_capture = tt_hit && board.is_capture(entry.move);
+            const bool tt_pv = entry.inPv && tt_hit;
 
             if (!pv_node && tt_hit && entry.depth >= depth && !is_singular){
 
@@ -159,6 +160,8 @@ namespace Sigmoid {
             reset_killers(stack->ply + 1);
 
             if (!in_check && !is_singular) {
+
+                // IIR.
                 if ((pv_node || cutNode) && depth >= 5 && !tt_hit)
                     depth--;
 
@@ -279,6 +282,9 @@ namespace Sigmoid {
                     if (cutNode)
                         reduction += 128;
 
+                    if (tt_pv)
+                        reduction -= 128;
+
                     reduction /= 128; // Scaling to a depth.
                     reduction = std::clamp((int)reduction, 0, new_depth - 2);
 
@@ -317,7 +323,7 @@ namespace Sigmoid {
                         assert(best_move == move);
                         if (!is_capture) {
                             update_continuation_histories(stack, best_move, quiet_moves, depth);
-                            update_quiet_histories(best_move, quiet_moves, depth);
+                            update_main_history(best_move, quiet_moves, depth);
                             store_killer_move(stack->ply, best_move);
                         }
                         else{
@@ -341,7 +347,7 @@ namespace Sigmoid {
                 return DRAW;
 
             if (!is_singular)
-                tt->store(board.key(), best_move, flag, depth, best_value, stack->ply);
+                tt->store(board.key(), best_move, flag, depth, best_value, stack->ply, pv_node);
 
             return best_value;
         }
@@ -394,7 +400,7 @@ namespace Sigmoid {
             return best_value;
         }
 
-        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
+        void update_main_history(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
             int bonus = std::min(150 * depth, 1650);
             apply_gravity(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], bonus, MainHistory::maxValue);
 
