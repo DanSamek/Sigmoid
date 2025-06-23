@@ -451,8 +451,10 @@ namespace Sigmoid {
         }
 
         void store_killer_move(int ply, const Move& move){
-            killerMoves[ply][1] = killerMoves[ply][0];
-            killerMoves[ply][0] = move;
+            if (killerMoves[ply][0] != move) {
+                killerMoves[ply][1] = killerMoves[ply][0];
+                killerMoves[ply][0] = move;
+            }
         }
 
         void reset_killers(int ply){
