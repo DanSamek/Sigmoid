@@ -75,7 +75,7 @@ namespace Sigmoid {
                     continue;
                 }
 
-                int16_t delta = 20;
+                int16_t delta = 10;
                 int16_t alpha = std::max(MIN_VALUE, (int16_t)(eval - delta));
                 int16_t beta = std::min(MAX_VALUE, (int16_t)(eval + delta));
 
@@ -98,7 +98,7 @@ namespace Sigmoid {
                         break;
                     }
 
-                    delta *= 2;
+                    delta = delta * 1.5;
                     if (delta >= 1000){
                         alpha = MIN_VALUE;
                         beta = MAX_VALUE;
