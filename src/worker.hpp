@@ -192,15 +192,18 @@ namespace Sigmoid {
                 // Probcut
                 const int16_t probcut_beta = beta + 300;
                 if (!pv_node && depth >= 6 && std::abs(beta) < CHECKMATE_BOUND
-                    && tt_hit && entry.eval >= probcut_beta && entry.depth + 3 >= depth) {
-                    
-                    const int probcut_depth = depth - 4;
-                    MoveList<true> ml(&board, &entry.move);
+                    && (!tt_hit || entry.eval >= probcut_beta || entry.depth + 3 >= depth)) {
 
+                    const int probcut_depth = depth - 4;
+
+                    MoveList<true> ml(&board, &entry.move);
                     Move move;
                     while ((move = ml.get()) != Move::none()) {
                         stack->movedPiece = board.at(move.from());
                         stack->currentMove = move;
+
+                        if (!board.see(move, -20 * depth * depth))
+                            continue;
 
                         if (!board.make_move(move))
                             continue;
