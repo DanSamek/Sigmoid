@@ -192,8 +192,7 @@ namespace Sigmoid {
                 // Probcut
                 const int16_t probcut_beta = beta + 300;
                 if (depth >= 5 && std::abs(beta) < CHECKMATE_BOUND &&
-                    tt_hit && entry.depth >= depth + 3 && entry.eval >= probcut_beta){
-
+                    tt_hit && entry.eval >= probcut_beta){
                     const int probcut_depth = depth - 5;
                     MoveList<true> ml(&board, &entry.move);
 
