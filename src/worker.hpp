@@ -450,11 +450,11 @@ namespace Sigmoid {
 
         void update_capture_history(const Move& bestMove,
                                     const std::vector<Move>& captureMoves,
-                                    const int depth){
+                                    const int depth) {
 
             int bonus = std::min(150 * depth, 1650);
 
-            auto update_capture_history = [this](const Move& move, const int bonus){
+            auto update_capture_history = [this](const Move& move, const int bonus) {
                 Piece moved_piece = board.at(move.from());
                 int to_square = move.to();
                 Piece captured_piece = move.special_type() == Move::EN_PASSANT ? PAWN : board.at(move.to());
@@ -471,14 +471,14 @@ namespace Sigmoid {
 
         int16_t apply_correction_histories(const Board& board, const int staticEval) {
             const uint64_t pk = pawn_key(board.whoPlay);
-            const int pawn_correction_history = pawnCorrectionHistory[board.whoPlay][pk] / 200;
+            const int pawn_correction_history = pawnCorrectionHistory[board.whoPlay][pk] / 100;
             int16_t result = std::clamp(staticEval + pawn_correction_history, int(-CHECKMATE_BOUND), int(CHECKMATE_BOUND));
             return result;
         }
 
         void update_correction_histories(const Board& board, int depth, int difference) {
             const uint64_t pk = pawn_key(board.whoPlay);
-            const int bonus = std::clamp((difference * depth) / 32, -MAX_CORRECTION_HISTORY_BONUS / 8, MAX_CORRECTION_HISTORY_BONUS / 8);
+            const int bonus = std::clamp((difference * depth) / 16, -MAX_CORRECTION_HISTORY_BONUS / 8, MAX_CORRECTION_HISTORY_BONUS / 8);
             apply_gravity(pawnCorrectionHistory[board.whoPlay][pk], bonus, MAX_CORRECTION_HISTORY_BONUS);
         }
 

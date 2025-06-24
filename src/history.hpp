@@ -48,7 +48,7 @@ namespace Sigmoid{
 
     // Correction histories
     const int CORRECTION_HISTORY_ENTRIES = 32'768;
-    const int MAX_CORRECTION_HISTORY_BONUS = 8'192;
+    const int MAX_CORRECTION_HISTORY_BONUS = 1'024;
     using PawnCorrectionHistory = std::array<std::array<int, CORRECTION_HISTORY_ENTRIES>, NUM_COLORS>;
 
     template<int Modulo>
