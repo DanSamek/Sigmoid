@@ -114,7 +114,6 @@ namespace Sigmoid {
         int16_t negamax(int depth, int16_t alpha, int16_t beta, StackItem* stack, bool cutNode) {
             constexpr bool root_node = nodeType == ROOT;
             constexpr bool pv_node = nodeType != NONPV;
-            result.nodesVisited++;
 
             if (result.nodesVisited & 2048 && is_time_out())
                 return MIN_VALUE;
@@ -269,6 +268,7 @@ namespace Sigmoid {
                 if (!board.make_move(move))
                     continue;
 
+                result.nodesVisited++;
                 move_count++;
                 tt->prefetch(board.key());
 
