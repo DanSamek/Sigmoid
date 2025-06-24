@@ -47,8 +47,8 @@ namespace Sigmoid{
     const int QUIET_OFFSET = KILLER_BONUS_0 + MAX_CAP_HIST_BONUS + 1; // max. quiet + -MAX_CAP_HIST bonus
 
     // Correction histories
-    const int CORRECTION_HISTORY_ENTRIES = 16381;
-    const int MAX_CORRECTION_HISTORY_BONUS = 10'000;
+    const int CORRECTION_HISTORY_ENTRIES = 16'381;
+    const int MAX_CORRECTION_HISTORY_BONUS = 8'192;
     using PawnCorrectionHistory = std::array<std::array<int, CORRECTION_HISTORY_ENTRIES>, NUM_COLORS>;
 }
 
