@@ -470,16 +470,16 @@ namespace Sigmoid {
         }
 
         int16_t apply_correction_histories(const Board& board, const int staticEval) {
-            const uint64_t pawn_key = board.pawn_key(board.whoPlay) % CORRECTION_HISTORY_ENTRIES;
-            const int pawn_correction_history = pawnCorrectionHistory[board.whoPlay][pawn_key] / 350;
+            const uint64_t pk = pawn_key(board.whoPlay);
+            const int pawn_correction_history = pawnCorrectionHistory[board.whoPlay][pk] / 200;
             int16_t result = std::clamp(staticEval + pawn_correction_history, int(-CHECKMATE_BOUND), int(CHECKMATE_BOUND));
             return result;
         }
 
         void update_correction_histories(const Board& board, int depth, int difference) {
-            const uint64_t pawn_key = board.pawn_key(board.whoPlay) % CORRECTION_HISTORY_ENTRIES;
+            const uint64_t pk = pawn_key(board.whoPlay);
             const int bonus = std::clamp((difference * depth) / 32, -MAX_CORRECTION_HISTORY_BONUS / 8, MAX_CORRECTION_HISTORY_BONUS / 8);
-            apply_gravity(pawnCorrectionHistory[board.whoPlay][pawn_key], bonus, MAX_CORRECTION_HISTORY_BONUS);
+            apply_gravity(pawnCorrectionHistory[board.whoPlay][pk], bonus, MAX_CORRECTION_HISTORY_BONUS);
         }
 
         void store_killer_move(int ply, const Move& move){
