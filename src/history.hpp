@@ -52,11 +52,11 @@ namespace Sigmoid{
     using PawnCorrectionHistory = std::array<std::array<int, CORRECTION_HISTORY_ENTRIES>, NUM_COLORS>;
 
     template<int Modulo>
-    static inline uint64_t key(uint64_t value){
+    static inline uint64_t key(const uint64_t& value){
         return value % Modulo;
     }
 
-    static inline uint64_t pawn_key(uint64_t value){
+    static inline uint64_t pawn_key(const uint64_t& value){
         return key<CORRECTION_HISTORY_ENTRIES>(value);
     }
 
