@@ -359,8 +359,11 @@ namespace Sigmoid {
                 tt->store(board.key(), best_move, flag, depth, best_value, stack->ply);
 
 
-            if (!in_check && (best_move == Move::none() || !board.is_capture(best_move)))
+            if (!in_check && (best_move == Move::none() || !board.is_capture(best_move))
+                && !(flag == LOWER_BOUND && static_eval >= best_value)
+                && !(flag == UPPER_BOUND && static_eval <= best_value)){
                 update_correction_histories(board, depth, static_eval - best_value);
+            }
 
             return best_value;
         }
