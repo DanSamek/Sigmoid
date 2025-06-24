@@ -159,6 +159,8 @@ namespace Sigmoid {
             reset_killers(stack->ply + 1);
 
             if (!in_check && !is_singular) {
+
+                // IIR.
                 if ((pv_node || cutNode) && depth >= 5 && !tt_hit)
                     depth--;
 
@@ -186,6 +188,15 @@ namespace Sigmoid {
                     stack->can_null = true;
 
                     if (value >= beta)
+                        return value;
+                }
+
+                // Razoring.
+                if (!pv_node && depth <= 4 && std::abs(alpha) < CHECKMATE_BOUND &&
+                    static_eval + 300 + 250 * depth <= alpha){
+
+                    const int16_t value = q_search(alpha, alpha + 1, stack);
+                    if (value <= alpha)
                         return value;
                 }
             }
@@ -317,7 +328,7 @@ namespace Sigmoid {
                         assert(best_move == move);
                         if (!is_capture) {
                             update_continuation_histories(stack, best_move, quiet_moves, depth);
-                            update_quiet_histories(best_move, quiet_moves, depth);
+                            update_main_history(best_move, quiet_moves, depth);
                             store_killer_move(stack->ply, best_move);
                         }
                         else{
@@ -394,7 +405,7 @@ namespace Sigmoid {
             return best_value;
         }
 
-        void update_quiet_histories(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
+        void update_main_history(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
             int bonus = std::min(150 * depth, 1650);
             apply_gravity(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], bonus, MainHistory::maxValue);
 
