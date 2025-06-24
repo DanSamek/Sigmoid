@@ -478,7 +478,7 @@ namespace Sigmoid {
 
         void update_correction_histories(const Board& board, int depth, int difference) {
             const uint64_t pawn_key = board.pawn_key(board.whoPlay) % CORRECTION_HISTORY_ENTRIES;
-            const int bonus = std::clamp((difference * depth) / 16, MAX_CORRECTION_HISTORY_BONUS / 8, MAX_CORRECTION_HISTORY_BONUS / 8);
+            const int bonus = std::clamp((difference * depth) / 16, -MAX_CORRECTION_HISTORY_BONUS / 8, MAX_CORRECTION_HISTORY_BONUS / 8);
             apply_gravity(pawnCorrectionHistory[board.whoPlay][pawn_key], bonus, MAX_CORRECTION_HISTORY_BONUS);
         }
 
