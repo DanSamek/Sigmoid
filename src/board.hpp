@@ -40,6 +40,10 @@ namespace Sigmoid {
             return currentState.zobristKey;
         }
 
+        [[nodiscard]] uint64_t pawn_key(Color us) const{
+            return currentState.pawnKeys[us];
+        }
+
         bool make_move(const Move& move){
             return whoPlay == WHITE ? make_move<WHITE>(move) : make_move<BLACK>(move);
         }
@@ -78,6 +82,10 @@ namespace Sigmoid {
                 new_state.bitboards[captured].pop_bit<op>(to);
 
                 new_state.zobristKey ^= Zobrist::pieceKeys[~us][captured][to];
+
+                if (captured == PAWN)
+                    new_state.pawnKeys[~us] ^= Zobrist::pieceKeys[~us][PAWN][to];
+
                 new_state.halfMove = 0;
             }
             else{
@@ -110,6 +118,14 @@ namespace Sigmoid {
 
             new_state.zobristKey ^= Zobrist::pieceKeys[us][piece][from];
             new_state.zobristKey ^= Zobrist::pieceKeys[us][promo_piece == NONE ? piece : promo_piece][to];
+
+            // Pawn key
+            if (piece == PAWN){
+                new_state.pawnKeys[us] ^= Zobrist::pieceKeys[us][PAWN][from];
+
+                if (promo_piece == NONE)
+                    new_state.pawnKeys[us] ^= Zobrist::pieceKeys[us][PAWN][to];
+            }
 
             disable_castling<us>(new_state, piece, move);
 
@@ -274,6 +290,7 @@ namespace Sigmoid {
             ss >> currentState.halfMove >> currentState.fullMove;
 
             currentState.zobristKey = Zobrist::get_key(currentState, whoPlay);
+            currentState.pawnKeys = Zobrist::get_pawn_keys(currentState);
         }
 
         // Only for debug.
@@ -530,6 +547,7 @@ namespace Sigmoid {
             state.pieceMap[enemy_pawn_square] = NONE;
 
             state.zobristKey ^= Zobrist::pieceKeys[~us][PAWN][enemy_pawn_square];
+            state.pawnKeys[~us] ^= Zobrist::pieceKeys[~us][PAWN][enemy_pawn_square];
         }
 
         inline static uint64_t get_occupancy(const State& state){

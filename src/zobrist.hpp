@@ -53,6 +53,16 @@ namespace Sigmoid {
             return key;
         }
 
+        static std::array<uint64_t, 2> get_pawn_keys(const State& state){
+            std::array<uint64_t, 2> pawn_keys = {0, 0};
+            const PairBitboard& pb = state.bitboards[PAWN];
+            for (int color = WHITE; color <= BLACK; color++) {
+                uint64_t bb = pb.bitboards[color];
+                while (bb)
+                    pawn_keys[color] ^= pieceKeys[color][PAWN][bit_scan_forward_pop_lsb(bb)];
+            }
+            return pawn_keys;
+        }
 
     private:
         // Generated zobrist keys using python script.

@@ -25,6 +25,7 @@ namespace Sigmoid {
         ContinuationHistory continuationHistory;
         CaptureHistory::type captureHistory;
         KillerMoves killerMoves;
+        PawnCorrectionHistory pawnCorrectionHistory;
 
         static inline std::array<std::array<int16_t, MAX_POSSIBLE_MOVES>, MAX_PLY> lmrTable;
         static inline bool loadedLmr = false;
@@ -151,9 +152,12 @@ namespace Sigmoid {
                 return q_search(alpha, beta, stack);
 
             stack->can_null = (stack - 1)->can_null;
-            const int16_t static_eval = stack->eval = board.eval();
+            int16_t static_eval = stack->eval = board.eval();
             const bool in_check = board.in_check();
             const bool improving = stack->eval > (stack - 2)->eval;
+
+            if (!in_check)
+                static_eval = stack->eval = apply_correction_histories(board, static_eval);
 
             reset_killers(stack->ply + 1);
 
@@ -354,6 +358,10 @@ namespace Sigmoid {
             if (!is_singular)
                 tt->store(board.key(), best_move, flag, depth, best_value, stack->ply);
 
+
+            if (!in_check && (best_move == Move::none() || !board.is_capture(best_move)))
+                update_correction_histories(board, depth, static_eval - best_value);
+
             return best_value;
         }
 
@@ -461,6 +469,19 @@ namespace Sigmoid {
             }
         }
 
+        int16_t apply_correction_histories(const Board& board, const int staticEval) {
+            const uint64_t pawn_key = board.pawn_key(board.whoPlay) % CORRECTION_HISTORY_ENTRIES;
+            const int pawn_correction_history = pawnCorrectionHistory[board.whoPlay][pawn_key] / 250;
+            int16_t result = std::clamp(staticEval + pawn_correction_history, int(-CHECKMATE_BOUND), int(CHECKMATE_BOUND));
+            return result;
+        }
+
+        void update_correction_histories(const Board& board, int depth, int difference) {
+            const uint64_t pawn_key = board.pawn_key(board.whoPlay) % CORRECTION_HISTORY_ENTRIES;
+            const int bonus = std::clamp((difference * depth) / 16, MAX_CORRECTION_HISTORY_BONUS / 8, MAX_CORRECTION_HISTORY_BONUS / 8);
+            apply_gravity(pawnCorrectionHistory[board.whoPlay][pawn_key], bonus, MAX_CORRECTION_HISTORY_BONUS);
+        }
+
         void store_killer_move(int ply, const Move& move){
             killerMoves[ply][1] = killerMoves[ply][0];
             killerMoves[ply][0] = move;
@@ -487,6 +508,10 @@ namespace Sigmoid {
                 for (auto& square: pc)
                     for (auto& pc2 : square)
                         pc2 = 0;
+
+            for (auto& color : pawnCorrectionHistory)
+                for (auto& entry : color)
+                    entry = 0;
 
             if (loadedLmr)
                 return;
