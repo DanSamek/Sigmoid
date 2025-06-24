@@ -361,7 +361,7 @@ namespace Sigmoid {
 
             if (!in_check && (best_move == Move::none() || !board.is_capture(best_move))
                 && !(flag == LOWER_BOUND && static_eval >= best_value)
-                && !(flag == UPPER_BOUND && static_eval <= best_value)){
+                && !(flag == UPPER_BOUND && static_eval < best_value)){
                 update_correction_histories(board, depth, static_eval - best_value);
             }
 
@@ -474,7 +474,7 @@ namespace Sigmoid {
 
         int16_t apply_correction_histories(const Board& board, const int staticEval) {
             const uint64_t pk = pawn_key(board.pawn_key(board.whoPlay));
-            const int pawn_correction_history = pawnCorrectionHistory[board.whoPlay][pk] / 50;
+            const int pawn_correction_history = pawnCorrectionHistory[board.whoPlay][pk] / 20;
             int16_t result = std::clamp(staticEval + pawn_correction_history, int(-CHECKMATE_BOUND), int(CHECKMATE_BOUND));
             return result;
         }
