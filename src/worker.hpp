@@ -62,6 +62,14 @@ namespace Sigmoid {
             reset_killers(root->ply);
 
             int16_t eval;
+
+            std::array<int64_t, 2> last_times = {0,0};
+
+            auto update_times = [&last_times, this]()->void{
+                last_times[1] = last_times[0];
+                last_times[0] = timer->get_ms();
+            };
+
             for (int depth = 1; depth <= searchDepth; depth++){
                 if (depth <= 5){
                     eval = negamax<ROOT>(depth, MIN_VALUE, MAX_VALUE, root, false);
@@ -72,8 +80,15 @@ namespace Sigmoid {
                     result.score = eval;
                     workerHelper->enter_search_result(depth, result);
 
+                    update_times();
                     continue;
                 }
+
+                int64_t total_difference = (last_times[0] - last_times[1]);
+                int64_t difference = total_difference / 10;
+                if (timer->is_time_out(difference) && total_difference >= 200
+                    && searchDepth == MAX_PLY - 1)
+                    break;
 
                 int16_t delta = 20;
                 int16_t alpha = std::max(MIN_VALUE, (int16_t)(eval - delta));
@@ -94,6 +109,8 @@ namespace Sigmoid {
                         if (!is_time_out()){
                             result.score = eval;
                             workerHelper->enter_search_result(depth, result);
+
+                            update_times();
                         }
                         break;
                     }

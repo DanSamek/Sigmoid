@@ -20,13 +20,17 @@ namespace Sigmoid {
         [[nodiscard]] bool is_time_out() const{
             auto now = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsed = now - startTime;
-            return (elapsed.count() * 1000 ) >= toSearch;
+            return (elapsed.count() * 1000) >= toSearch;
         }
 
         [[nodiscard]] int64_t get_ms() const{
             auto now = std::chrono::high_resolution_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime);
             return elapsed.count();
+        }
+
+        [[nodiscard]] bool is_time_out(int64_t addition){
+            return (get_ms() + addition) >= toSearch;
         }
 
         [[nodiscard]] static int64_t getSearchTime(int64_t timeRemaining, int64_t increment) {
