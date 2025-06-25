@@ -16,7 +16,7 @@ namespace Sigmoid{
         uint8_t enPassantSquare = 0;
         uint64_t zobristKey = 0ULL;
         uint16_t halfMove = 0, fullMove = 1;
-        std::array<uint64_t, 2> pawnKeys;
+        uint64_t pawnKey;
 
         uint8_t castling = 0;
 
@@ -27,10 +27,7 @@ namespace Sigmoid{
             for (Piece& p : pieceMap)
                 p = NONE;
 
-            for (uint64_t& pk : pawnKeys)
-                pk = 0;
-
-            zobristKey = castling = halfMove = 0;
+            pawnKey = zobristKey = castling = halfMove = 0;
             fullMove = 1;
             enPassantSquare = NO_SQUARE;
         }

@@ -53,15 +53,15 @@ namespace Sigmoid {
             return key;
         }
 
-        static std::array<uint64_t, 2> get_pawn_keys(const State& state){
-            std::array<uint64_t, 2> pawn_keys = {0, 0};
+        static uint64_t get_pawn_key(const State& state){
+            uint64_t pawn_key = 0;
             const PairBitboard& pb = state.bitboards[PAWN];
             for (int color = WHITE; color <= BLACK; color++) {
                 uint64_t bb = pb.bitboards[color];
                 while (bb)
-                    pawn_keys[color] ^= pieceKeys[color][PAWN][bit_scan_forward_pop_lsb(bb)];
+                    pawn_key ^= pieceKeys[color][PAWN][bit_scan_forward_pop_lsb(bb)];
             }
-            return pawn_keys;
+            return pawn_key;
         }
 
     private:

@@ -40,8 +40,8 @@ namespace Sigmoid {
             return currentState.zobristKey;
         }
 
-        [[nodiscard]] uint64_t pawn_key(Color us) const{
-            return currentState.pawnKeys[us];
+        [[nodiscard]] uint64_t pawn_key() const{
+            return currentState.pawnKey;
         }
 
         bool make_move(const Move& move){
@@ -84,7 +84,7 @@ namespace Sigmoid {
                 new_state.zobristKey ^= Zobrist::pieceKeys[~us][captured][to];
 
                 if (captured == PAWN)
-                    new_state.pawnKeys[~us] ^= Zobrist::pieceKeys[~us][PAWN][to];
+                    new_state.pawnKey ^= Zobrist::pieceKeys[~us][PAWN][to];
 
                 new_state.halfMove = 0;
             }
@@ -121,10 +121,10 @@ namespace Sigmoid {
 
             // Pawn key
             if (piece == PAWN){
-                new_state.pawnKeys[us] ^= Zobrist::pieceKeys[us][PAWN][from];
+                new_state.pawnKey ^= Zobrist::pieceKeys[us][PAWN][from];
 
                 if (promo_piece == NONE)
-                    new_state.pawnKeys[us] ^= Zobrist::pieceKeys[us][PAWN][to];
+                    new_state.pawnKey ^= Zobrist::pieceKeys[us][PAWN][to];
             }
 
             disable_castling<us>(new_state, piece, move);
@@ -290,7 +290,7 @@ namespace Sigmoid {
             ss >> currentState.halfMove >> currentState.fullMove;
 
             currentState.zobristKey = Zobrist::get_key(currentState, whoPlay);
-            currentState.pawnKeys = Zobrist::get_pawn_keys(currentState);
+            currentState.pawnKey = Zobrist::get_pawn_key(currentState);
         }
 
         // Only for debug.
@@ -547,7 +547,7 @@ namespace Sigmoid {
             state.pieceMap[enemy_pawn_square] = NONE;
 
             state.zobristKey ^= Zobrist::pieceKeys[~us][PAWN][enemy_pawn_square];
-            state.pawnKeys[~us] ^= Zobrist::pieceKeys[~us][PAWN][enemy_pawn_square];
+            state.pawnKey ^= Zobrist::pieceKeys[~us][PAWN][enemy_pawn_square];
         }
 
         inline static uint64_t get_occupancy(const State& state){
