@@ -255,9 +255,14 @@ namespace Sigmoid {
                     const int16_t value = negamax<NONPV>(singular_depth, singular_beta - 1, singular_beta, stack, cutNode);
                     stack->excludedMove = Move::none();
 
-                    if (value < singular_beta)
-                        extension = 1 + (!pv_node && value + 25 < singular_beta);
-
+                    if (value < singular_beta){
+                        extension = 1;
+                        if (!pv_node && value + 25 < singular_beta){
+                            extension++;
+                            if (!is_capture && value + 100 < singular_beta)
+                                extension++;
+                        }
+                    }
                     else if (entry.eval >= beta)
                         extension = -1;
                     else if (cutNode)
