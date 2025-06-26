@@ -7,6 +7,8 @@
 #define SIGMOID_TT_HPP
 
 namespace Sigmoid {
+    __extension__ typedef unsigned __int128 uint128_t;
+
     enum TTFlag : int8_t {
         LOWER_BOUND = 1,
         UPPER_BOUND = 2,
@@ -66,8 +68,9 @@ namespace Sigmoid {
             return {entry, tt_hit};
         }
 
+
         inline int get_index(const uint64_t& key){
-            return int(key % numberOfEntries);
+            return int(((uint128_t)(key) * (uint128_t)(numberOfEntries)) >> 64);
         }
 
         ~TranspositionTable(){
