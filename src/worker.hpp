@@ -242,7 +242,6 @@ namespace Sigmoid {
                 if (!root_node && depth <= 7 && is_capture && !in_check && !board.see(move, -40 * depth * depth))
                     continue;
 
-
                 // Singular extensions.
                 int extension = 0;
                 if (!root_node && move == entry.move &&
@@ -265,6 +264,16 @@ namespace Sigmoid {
                         extension = -2;
                 }
 
+                int move_score = 0;
+                if (is_capture){
+                    int to_square = move.to();
+                    Piece captured_piece = move.special_type() == Move::EN_PASSANT ? PAWN : board.at(move.to());
+                    move_score = captureHistory[stack->movedPiece][to_square][captured_piece];
+                }
+                else{
+                    move_score = mainHistory[board.whoPlay][move.from()][move.to()];
+                }
+
                 if (!board.make_move(move))
                     continue;
 
@@ -277,6 +286,7 @@ namespace Sigmoid {
 
                 const int new_depth = depth - 1 + extension;
                 if (depth >= 3 && !root_node && move_count > 3){
+
                     reduction = lmrTable[depth - 1][move_count - 1];
                     if (pv_node)
                         reduction -= 128;
@@ -289,6 +299,8 @@ namespace Sigmoid {
 
                     if (cutNode)
                         reduction += 128;
+
+                    reduction -= move_score / 256;
 
                     reduction /= 128; // Scaling to a depth.
                     reduction = std::clamp((int)reduction, 0, new_depth - 2);
