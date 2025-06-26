@@ -258,6 +258,11 @@ namespace Sigmoid {
                     if (value < singular_beta)
                         extension = 1 + (!pv_node && value + 25 < singular_beta);
 
+                    // Multicut
+                    else if (singular_beta >= beta)
+                        return singular_beta;
+
+                    // Negative extensions
                     else if (entry.eval >= beta)
                         extension = -1;
                     else if (cutNode)
