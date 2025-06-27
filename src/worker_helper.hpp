@@ -58,13 +58,38 @@ namespace Sigmoid{
 
             if (datagen) return;
 
+            print_result(searchDepth);
+        }
+
+        void print_result(const int searchDepth){
             int64_t ms = timer->get_ms();
             if (!ms)
                 ms = 1;
 
-            std::cout << "info score cp " << bestResult.score << " depth "
-            << searchDepth << " pv " << bestResult.bestMove.to_uci()
-            << " nodes "<< totalNodesVisited  << " time " << ms << " nps " << (totalNodesVisited *1000) / ms << std::endl;
+            assert(bestResult.bestMove == bestResult.pvTable[0][0]);
+
+            const bool is_mate = std::abs(bestResult.score) > CHECKMATE_BOUND;
+            const bool winning_mate = is_mate && bestResult.score > 0;
+            std::cout << "info score ";
+            if (!is_mate){
+                std::cout << "cp " << bestResult.score;
+            }
+            else{
+                std::cout << "mate ";
+                const int ply = std::abs(std::abs(bestResult.score) - CHECKMATE);
+                if (!winning_mate)
+                    std::cout << "-";
+                std::cout << (ply + 1) / 2;
+            }
+
+            std::cout << " depth "<< searchDepth;
+            std::cout << " nodes " << totalNodesVisited  << " time " << ms << " nps " << (totalNodesVisited * 1000) / ms;
+
+            std::cout << " pv ";
+            for (int i = 0; i < bestResult.pvLength[0]; i++)
+                std::cout << bestResult.pvTable[0][i].to_uci() << " ";
+
+            std::cout << std::endl;
         }
     };
 }

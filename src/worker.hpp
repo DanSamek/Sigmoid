@@ -150,6 +150,11 @@ namespace Sigmoid {
             if (depth <= 0)
                 return q_search(alpha, beta, stack);
 
+            int16_t alpha_md = std::max(int(alpha), -CHECKMATE + stack->ply);
+            int16_t beta_md = std::min(int(beta), CHECKMATE - stack->ply - 1);
+            if(!root_node && alpha_md >= beta_md)
+                return alpha_md;
+
             stack->can_null = (stack - 1)->can_null;
             const int16_t static_eval = stack->eval = board.eval();
             const bool in_check = board.in_check();
@@ -211,6 +216,10 @@ namespace Sigmoid {
             std::vector<Move> capture_moves;
 
             TTFlag flag = UPPER_BOUND;
+
+            if constexpr (pv_node)
+                result.pvLength[stack->ply] = 0;
+
             while ((move = ml.get()) != Move::none()){
 
                 if (move == stack->excludedMove)
@@ -332,6 +341,14 @@ namespace Sigmoid {
                         best_move = move;
                         alpha = value;
                         flag = EXACT;
+
+                        if constexpr (pv_node){
+                            result.pvTable[stack->ply][0] = move;
+                            for (int i = 0; i < result.pvLength[stack->ply + 1]; i++) {
+                                result.pvTable[stack->ply][i + 1] = result.pvTable[stack->ply + 1][i];
+                            }
+                            result.pvLength[stack->ply] = result.pvLength[stack->ply + 1] + 1;
+                        }
                     }
 
                     if (value >= beta){
