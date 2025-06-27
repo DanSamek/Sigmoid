@@ -334,21 +334,17 @@ namespace Sigmoid {
                 if (value > best_value) {
                     best_value = value;
 
-                    if constexpr (root_node)
+                    if constexpr (root_node){
                         result.bestMove = move;
+                        update_pv<true>(stack->ply, move);
+                    }
 
                     if (value > alpha){
                         best_move = move;
                         alpha = value;
                         flag = EXACT;
 
-                        if constexpr (pv_node){
-                            result.pvTable[stack->ply][0] = move;
-                            for (int i = 0; i < result.pvLength[stack->ply + 1]; i++) {
-                                result.pvTable[stack->ply][i + 1] = result.pvTable[stack->ply + 1][i];
-                            }
-                            result.pvLength[stack->ply] = result.pvLength[stack->ply + 1] + 1;
-                        }
+                        update_pv<pv_node>(stack->ply, move);
                     }
 
                     if (value >= beta){
@@ -432,6 +428,18 @@ namespace Sigmoid {
             }
 
             return best_value;
+        }
+
+
+        template<bool pv_node>
+        void update_pv(const int ply, const Move& move){
+            if constexpr (pv_node){
+                result.pvTable[ply][0] = move;
+                for (int i = 0; i < result.pvLength[ply + 1]; i++) {
+                    result.pvTable[ply][i + 1] = result.pvTable[ply + 1][i];
+                }
+                result.pvLength[ply] = result.pvLength[ply + 1] + 1;
+            }
         }
 
         void update_main_history(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
