@@ -268,7 +268,7 @@ namespace Sigmoid {
                         extension = 1 + (!pv_node && value + 25 < singular_beta);
 
                     else if (entry.eval >= beta)
-                        extension = -1;
+                        extension = -2 + pv_node;
                     else if (cutNode)
                         extension = -2;
                 }
