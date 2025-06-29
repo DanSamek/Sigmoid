@@ -115,6 +115,9 @@ namespace Sigmoid {
             constexpr bool root_node = nodeType == ROOT;
             constexpr bool pv_node = nodeType != NONPV;
 
+            if constexpr (pv_node)
+                result.pvLength[stack->ply] = 0;
+
             if (result.nodesVisited & 2048 && is_time_out())
                 return MIN_VALUE;
 
@@ -216,9 +219,6 @@ namespace Sigmoid {
             std::vector<Move> capture_moves;
 
             TTFlag flag = UPPER_BOUND;
-
-            if constexpr (pv_node)
-                result.pvLength[stack->ply] = 0;
 
             while ((move = ml.get()) != Move::none()){
 
