@@ -115,6 +115,9 @@ namespace Sigmoid {
             constexpr bool root_node = nodeType == ROOT;
             constexpr bool pv_node = nodeType != NONPV;
 
+            if constexpr (pv_node)
+                result.pvLength[stack->ply] = 0;
+
             if (result.nodesVisited & 2048 && is_time_out())
                 return MIN_VALUE;
 
@@ -149,6 +152,11 @@ namespace Sigmoid {
 
             if (depth <= 0)
                 return q_search(alpha, beta, stack);
+
+            int16_t alpha_md = std::max(int(alpha), -CHECKMATE + stack->ply);
+            int16_t beta_md = std::min(int(beta), CHECKMATE - stack->ply - 1);
+            if(!root_node && alpha_md >= beta_md)
+                return alpha_md;
 
             stack->can_null = (stack - 1)->can_null;
             const int16_t static_eval = stack->eval = board.eval();
@@ -211,6 +219,7 @@ namespace Sigmoid {
             std::vector<Move> capture_moves;
 
             TTFlag flag = UPPER_BOUND;
+
             while ((move = ml.get()) != Move::none()){
 
                 if (move == stack->excludedMove)
@@ -325,13 +334,17 @@ namespace Sigmoid {
                 if (value > best_value) {
                     best_value = value;
 
-                    if constexpr (root_node)
+                    if constexpr (root_node){
                         result.bestMove = move;
+                        update_pv<true>(stack->ply, move);
+                    }
 
                     if (value > alpha){
                         best_move = move;
                         alpha = value;
                         flag = EXACT;
+
+                        update_pv<pv_node>(stack->ply, move);
                     }
 
                     if (value >= beta){
@@ -415,6 +428,18 @@ namespace Sigmoid {
             }
 
             return best_value;
+        }
+
+
+        template<bool pv_node>
+        void update_pv(const int ply, const Move& move){
+            if constexpr (pv_node){
+                result.pvTable[ply][0] = move;
+                for (int i = 0; i < result.pvLength[ply + 1]; i++) {
+                    result.pvTable[ply][i + 1] = result.pvTable[ply + 1][i];
+                }
+                result.pvLength[ply] = result.pvLength[ply + 1] + 1;
+            }
         }
 
         void update_main_history(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
