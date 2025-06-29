@@ -310,7 +310,7 @@ namespace Sigmoid {
                         reduction += 128;
 
                     if (board.in_check())
-                        reduction -= 128;
+                        reduction -= 64;
 
                     reduction -= move_score / 256;
 
