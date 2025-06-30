@@ -32,6 +32,7 @@ namespace Sigmoid {
         bool can_null = true;
         Piece movedPiece = NONE;
         int16_t eval = MAX_VALUE;
+        int cutoffCount = 0;
     };
 }
 

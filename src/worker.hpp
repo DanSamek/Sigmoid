@@ -52,7 +52,7 @@ namespace Sigmoid {
 
         void iterative_deepening() {
 
-            StackItem stack[MAX_PLY + 5];
+            StackItem stack[MAX_PLY + 10];
             StackItem* root = stack + 5;
 
             for (int i = 0; i < MAX_PLY - 1; i++){
@@ -63,6 +63,7 @@ namespace Sigmoid {
 
             int16_t eval;
             for (int depth = 1; depth <= searchDepth; depth++){
+                (root + 1)->cutoffCount = 0;
                 if (depth <= 5){
                     eval = negamax<ROOT>(depth, MIN_VALUE, MAX_VALUE, root, false);
 
@@ -117,6 +118,8 @@ namespace Sigmoid {
 
             if constexpr (pv_node)
                 result.pvLength[stack->ply] = 0;
+
+            (stack + 2)->cutoffCount = 0;
 
             if (result.nodesVisited & 2048 && is_time_out())
                 return MIN_VALUE;
@@ -312,6 +315,9 @@ namespace Sigmoid {
                     if (board.in_check())
                         reduction -= 128;
 
+                    if ((stack + 1)->cutoffCount > 10)
+                        reduction += 128;
+
                     reduction -= move_score / 256;
 
                     reduction /= 128; // Scaling to a depth.
@@ -363,6 +369,7 @@ namespace Sigmoid {
                             update_capture_history(best_move, capture_moves, depth);
                         }
 
+                        stack->cutoffCount++;
                         break;
                     }
                 }
