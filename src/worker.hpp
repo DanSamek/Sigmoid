@@ -309,6 +309,9 @@ namespace Sigmoid {
                     if (cutNode)
                         reduction += 128;
 
+                    if (board.in_check())
+                        reduction -= 128;
+
                     reduction -= move_score / 256;
 
                     reduction /= 128; // Scaling to a depth.
