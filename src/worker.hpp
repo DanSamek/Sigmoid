@@ -315,8 +315,8 @@ namespace Sigmoid {
                     if (board.in_check())
                         reduction -= 128;
 
-                    if ((stack + 1)->cutoffCount > 10)
-                        reduction += 128;
+                    if ((stack + 1)->cutoffCount > 5)
+                        reduction += 96;
 
                     reduction -= move_score / 256;
 
