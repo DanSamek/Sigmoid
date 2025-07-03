@@ -469,14 +469,15 @@ namespace Sigmoid {
         void update_continuation_histories_move(const StackItem* stack, const Move& move, int bonus, const Piece movedPiece){
             assert(movedPiece != NONE);
 
-            for (int n_ply = 1; n_ply <= CONT_HIST_MAX_PLY; n_ply++){
-                const Move& previous_move = (stack - n_ply)->currentMove;
-                const Piece previous_piece = (stack - n_ply)->movedPiece;
+            for (const auto [ply, idx, scale] : CONT_PLY_IDX_SCALES){
+                const Move& previous_move = (stack - ply)->currentMove;
+                const Piece previous_piece = (stack - ply)->movedPiece;
                 if (previous_move == Move::none() || previous_move == Move::null())
                     break;
 
-                int& entry = continuationHistory[n_ply - 1][previous_piece][previous_move.to()][movedPiece][move.to()];
-                apply_gravity(entry, bonus, ContinuationHistoryEntry::maxValue);
+                const int scaled_bonus = (bonus * scale) / CONT_PLY_BONUS_SCALE_BASE;
+                int& entry = continuationHistory[idx][previous_piece][previous_move.to()][movedPiece][move.to()];
+                apply_gravity(entry, scaled_bonus, ContinuationHistoryEntry::maxValue);
             }
         }
 
