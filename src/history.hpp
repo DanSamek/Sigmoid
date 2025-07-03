@@ -42,7 +42,7 @@ namespace Sigmoid{
     const int MAX_CONT_HIST_BONUS = 20'000;
 
     const int CONT_PLY_BONUS_SCALE_BASE = 128;
-    const std::array<int, 3> CONT_PLY_IDX_SCALES[CONT_HIST_SIZE] = {{1, 0, 128}, {2, 1, 128}, {4, 2, 64}};
+    const std::array<int, 3> CONT_PLY_IDX_SCALES[CONT_HIST_SIZE] = {{1, 0, 128}, {2, 1, 128}, {4, 2, 128}};
     const std::array<int, 2> CONT_PLY_IDX[CONT_HIST_SIZE] = {{1, 0}, {2, 1}, {4, 2}};
 
     // [prev_pc][prev_to_sq] [pc][to_sq]
