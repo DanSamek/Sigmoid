@@ -38,16 +38,16 @@ namespace Sigmoid{
 
     using MainHistory = History<std::numeric_limits<int16_t>::max(), NUM_COLORS, NUM_SQUARES, NUM_SQUARES>;
 
-    const int CONT_HIST_MAX_PLY = 2;
+    const int CONT_HIST_SIZE = 3;
     const int MAX_CONT_HIST_BONUS = 20'000;
 
     const int CONT_PLY_BONUS_SCALE_BASE = 128;
-    const std::array<int, 3> CONT_PLY_IDX_SCALES[2] = {{1, 0, 128}, {2, 1, 128}};
-    const std::array<int, 2> CONT_PLY_IDX[2] = {{1, 0}, {2, 1}};
+    const std::array<int, 3> CONT_PLY_IDX_SCALES[CONT_HIST_SIZE] = {{1, 0, 128}, {2, 1, 128}, {4, 2, 64}};
+    const std::array<int, 2> CONT_PLY_IDX[CONT_HIST_SIZE] = {{1, 0}, {2, 1}, {4, 2}};
 
     // [prev_pc][prev_to_sq] [pc][to_sq]
     using ContinuationHistoryEntry = History<MAX_CONT_HIST_BONUS, NUM_PIECES, NUM_SQUARES, NUM_PIECES, NUM_SQUARES>;
-    using ContinuationHistory = std::array<ContinuationHistoryEntry::type, CONT_HIST_MAX_PLY>;
+    using ContinuationHistory = std::array<ContinuationHistoryEntry::type, CONT_HIST_SIZE>;
 
     const int TT_MOVE_VALUE = 1'000'000;
     const int QUIET_OFFSET = KILLER_BONUS_0 + MAX_CAP_HIST_BONUS + 1; // max. quiet + -MAX_CAP_HIST bonus
