@@ -1,4 +1,5 @@
 #include "tests/test_runner.hpp"
+#include "datagen/datagen.hpp"
 
 #include "uci.hpp"
 #include "bencher.hpp"
@@ -14,7 +15,7 @@ int main(int argc, char* args[]) {
         TestRunner::run_all();
     if (command == "bench")
         Bencher::bench();
-
-    // TODO datagen
+    if (command == "datagen")
+        Datagen::run();
     return 0;
 }

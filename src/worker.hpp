@@ -14,10 +14,10 @@
 namespace Sigmoid {
 
     struct Worker {
-        Board board;
+        Board* board;
         TranspositionTable* tt;
         WorkerHelper* workerHelper;
-        SearchResult result;
+        SearchResult* result;
         Timer* timer;
         int searchDepth;
 
@@ -29,14 +29,20 @@ namespace Sigmoid {
         static inline std::array<std::array<int16_t, MAX_POSSIBLE_MOVES>, MAX_PLY> lmrTable;
         static inline bool loadedLmr = false;
 
+        // datagen stuff
+        bool datagen = false;
+        uint64_t softNodeLimit;
+
         // Called before every search.
-        void load_state(Board b, TranspositionTable* t, WorkerHelper* wh, Timer* tm, int sd){
-            board = std::move(b);
+        void load_state(Board* b, TranspositionTable* t, WorkerHelper* wh, Timer* tm, int sd, bool dg, int snl, SearchResult* sr){
+            board = b;
             tt = t;
             workerHelper = wh;
             timer = tm;
             searchDepth = sd;
-            result = SearchResult();
+            result = sr;
+            datagen = dg;
+            softNodeLimit = snl;
         }
 
         void new_game(){
@@ -45,6 +51,9 @@ namespace Sigmoid {
 
         bool is_time_out() {
             if (searchDepth != MAX_PLY - 1)
+                return false;
+
+            if (datagen)
                 return false;
 
             return timer->is_time_out();
@@ -63,14 +72,18 @@ namespace Sigmoid {
 
             int16_t eval;
             for (int depth = 1; depth <= searchDepth; depth++){
+                if (datagen && result->nodesVisited > softNodeLimit)
+                    break;
+
                 if (depth <= 5){
                     eval = negamax<ROOT>(depth, MIN_VALUE, MAX_VALUE, root, false);
 
                     if (is_time_out())
                         break;
 
-                    result.score = eval;
-                    workerHelper->enter_search_result(depth, result);
+                    result->score = eval;
+                    if (!datagen)
+                        workerHelper->enter_search_result(depth, result);
 
                     continue;
                 }
@@ -92,8 +105,9 @@ namespace Sigmoid {
                     }
                     else{
                         if (!is_time_out()){
-                            result.score = eval;
-                            workerHelper->enter_search_result(depth, result);
+                            result->score = eval;
+                            if (!datagen)
+                                workerHelper->enter_search_result(depth, result);
                         }
                         break;
                     }
@@ -116,21 +130,21 @@ namespace Sigmoid {
             constexpr bool pv_node = nodeType != NONPV;
 
             if constexpr (pv_node)
-                result.pvLength[stack->ply] = 0;
+                result->pvLength[stack->ply] = 0;
 
-            if (result.nodesVisited & 2048 && is_time_out())
+            if (result->nodesVisited & 2048 && is_time_out())
                 return MIN_VALUE;
 
-            if (!root_node && board.is_draw())
+            if (!root_node && board->is_draw())
                 return DRAW;
 
             if (stack->ply >= MAX_PLY)
-                return board.eval();
+                return board->eval();
 
             const bool is_singular = stack->excludedMove != Move::none();
 
-            auto [entry, tt_hit] = tt->probe(board.key());
-            const bool tt_capture = tt_hit && board.is_capture(entry.move);
+            auto [entry, tt_hit] = tt->probe(board->key());
+            const bool tt_capture = tt_hit && board->is_capture(entry.move);
 
             if (!pv_node && tt_hit && entry.depth >= depth && !is_singular){
 
@@ -159,8 +173,8 @@ namespace Sigmoid {
                 return alpha_md;
 
             stack->can_null = (stack - 1)->can_null;
-            const int16_t static_eval = stack->eval = board.eval();
-            const bool in_check = board.in_check();
+            const int16_t static_eval = stack->eval = board->eval();
+            const bool in_check = board->in_check();
             const bool improving = stack->eval > (stack - 2)->eval;
 
             reset_killers(stack->ply + 1);
@@ -177,7 +191,7 @@ namespace Sigmoid {
                     return static_eval;
 
                 // Null move pruning.
-                const bool some_piece = board.some_big_piece();
+                const bool some_piece = board->some_big_piece();
                 if (!pv_node && depth >= 3 && stack->can_null && some_piece
                     && static_eval >= beta){
 
@@ -188,9 +202,9 @@ namespace Sigmoid {
                     stack->currentMove = Move::null();
                     stack->movedPiece = NONE;
 
-                    board.make_null_move();
+                    board->make_null_move();
                     const int16_t value = -negamax<NONPV>(nmp_depth, -beta, -beta + 1, stack + 1, !cutNode);
-                    board.undo_null_move();
+                    board->undo_null_move();
 
                     stack->can_null = true;
 
@@ -208,7 +222,7 @@ namespace Sigmoid {
                 }
             }
 
-            MoveList<false> ml(&board, &mainHistory, &entry.move, &continuationHistory,
+            MoveList<false> ml(board, &mainHistory, &entry.move, &continuationHistory,
                                stack, &captureHistory, &killerMoves[stack->ply]);
 
             Move move;
@@ -225,8 +239,8 @@ namespace Sigmoid {
                 if (move == stack->excludedMove)
                     continue;
 
-                const bool is_capture = board.is_capture(move);
-                stack->movedPiece = board.at(move.from());
+                const bool is_capture = board->is_capture(move);
+                stack->movedPiece = board->at(move.from());
                 stack->currentMove = move;
 
                 if (!is_capture && !in_check){
@@ -243,12 +257,12 @@ namespace Sigmoid {
                         continue;
 
                     // SEE pruning of quiets.
-                    if(!root_node && depth <= 7 && alpha > -CHECKMATE_BOUND && !board.see(move, -80 * depth))
+                    if(!root_node && depth <= 7 && alpha > -CHECKMATE_BOUND && !board->see(move, -80 * depth))
                         continue;
                 }
 
                 // SEE pruning of captures.
-                if (!root_node && depth <= 7 && is_capture && !in_check && !board.see(move, -40 * depth * depth))
+                if (!root_node && depth <= 7 && is_capture && !in_check && !board->see(move, -40 * depth * depth))
                     continue;
 
                 // Singular extensions.
@@ -276,19 +290,19 @@ namespace Sigmoid {
                 int move_score = 0;
                 if (is_capture){
                     int to_square = move.to();
-                    Piece captured_piece = move.special_type() == Move::EN_PASSANT ? PAWN : board.at(move.to());
+                    Piece captured_piece = move.special_type() == Move::EN_PASSANT ? PAWN : board->at(move.to());
                     move_score = captureHistory[stack->movedPiece][to_square][captured_piece];
                 }
                 else{
-                    move_score = mainHistory[board.whoPlay][move.from()][move.to()];
+                    move_score = mainHistory[board->whoPlay][move.from()][move.to()];
                 }
 
-                if (!board.make_move(move))
+                if (!board->make_move(move))
                     continue;
 
-                result.nodesVisited++;
+                result->nodesVisited++;
                 move_count++;
-                tt->prefetch(board.key());
+                tt->prefetch(board->key());
 
                 int16_t value;
                 int16_t reduction = 0;
@@ -309,7 +323,7 @@ namespace Sigmoid {
                     if (cutNode)
                         reduction += 128;
 
-                    if (board.in_check())
+                    if (board->in_check())
                         reduction -= 128;
 
                     reduction -= move_score / 256;
@@ -329,7 +343,7 @@ namespace Sigmoid {
                 if (pv_node && (move_count == 1 || value > alpha))
                     value = -negamax<PV>(new_depth, -beta, -alpha, stack + 1, false);
 
-                board.undo_move();
+                board->undo_move();
 
                 if (is_time_out())
                     return MIN_VALUE;
@@ -338,7 +352,7 @@ namespace Sigmoid {
                     best_value = value;
 
                     if constexpr (root_node){
-                        result.bestMove = move;
+                        result->bestMove = move;
                         update_pv<true>(stack->ply, move);
                     }
 
@@ -380,14 +394,14 @@ namespace Sigmoid {
                 return DRAW;
 
             if (!is_singular)
-                tt->store(board.key(), best_move, flag, depth, best_value, stack->ply);
+                tt->store(board->key(), best_move, flag, depth, best_value, stack->ply);
 
             return best_value;
         }
 
         //template<NodeType nodeType>
         int16_t q_search(int16_t alpha, int16_t beta, StackItem* stack) {
-            int16_t best_value = board.eval();
+            int16_t best_value = board->eval();
             if (stack->ply >= MAX_PLY)
                 return best_value;
 
@@ -396,25 +410,25 @@ namespace Sigmoid {
             if (best_value > alpha)
                 alpha = best_value;
 
-            if (result.nodesVisited & 2048 && is_time_out())
+            if (result->nodesVisited & 2048 && is_time_out())
                 return MIN_VALUE;
 
-            MoveList<true> ml(&board);
+            MoveList<true> ml(board);
             Move move;
 
-            const bool in_check = board.in_check();
+            const bool in_check = board->in_check();
             while ((move = ml.get()) != Move::none()){
                 
-                if (!in_check && !board.see(move, 0))
+                if (!in_check && !board->see(move, 0))
                     continue;
 
-                if (!board.make_move(move))
+                if (!board->make_move(move))
                     continue;
 
-                result.nodesVisited++;
+                result->nodesVisited++;
                 int16_t value = static_cast<int16_t>(-q_search(-beta, -alpha, stack + 1));
 
-                board.undo_move();
+                board->undo_move();
 
                 if (is_time_out())
                     return MIN_VALUE;
@@ -436,21 +450,24 @@ namespace Sigmoid {
 
         template<bool pv_node>
         void update_pv(const int ply, const Move& move){
+            if (datagen)
+                return;
+
             if constexpr (pv_node){
-                result.pvTable[ply][0] = move;
-                for (int i = 0; i < result.pvLength[ply + 1]; i++) {
-                    result.pvTable[ply][i + 1] = result.pvTable[ply + 1][i];
+                result->pvTable[ply][0] = move;
+                for (int i = 0; i < result->pvLength[ply + 1]; i++) {
+                    result->pvTable[ply][i + 1] = result->pvTable[ply + 1][i];
                 }
-                result.pvLength[ply] = result.pvLength[ply + 1] + 1;
+                result->pvLength[ply] = result->pvLength[ply + 1] + 1;
             }
         }
 
         void update_main_history(const Move& bestMove, const std::vector<Move>& quietMoves, const int depth){
             int bonus = std::min(150 * depth, 1650);
-            apply_gravity(mainHistory[board.whoPlay][bestMove.from()][bestMove.to()], bonus, MainHistory::maxValue);
+            apply_gravity(mainHistory[board->whoPlay][bestMove.from()][bestMove.to()], bonus, MainHistory::maxValue);
 
             for (const Move& move: quietMoves)
-                apply_gravity(mainHistory[board.whoPlay][move.from()][move.to()], -bonus, MainHistory::maxValue);
+                apply_gravity(mainHistory[board->whoPlay][move.from()][move.to()], -bonus, MainHistory::maxValue);
         }
 
 
@@ -460,10 +477,10 @@ namespace Sigmoid {
                                            const int depth){
 
             int bonus = std::min(110 * depth, 1650);
-            update_continuation_histories_move(stack, bestMove, bonus, board.at(bestMove.from()));
+            update_continuation_histories_move(stack, bestMove, bonus, board->at(bestMove.from()));
 
             for (const Move& move : quietMoves)
-                update_continuation_histories_move(stack, move, -bonus, board.at(move.from()));
+                update_continuation_histories_move(stack, move, -bonus, board->at(move.from()));
         }
 
         void update_continuation_histories_move(const StackItem* stack, const Move& move, int bonus, const Piece movedPiece){
@@ -488,9 +505,9 @@ namespace Sigmoid {
             int bonus = std::min(150 * depth, 1650);
 
             auto update_capture_history = [this](const Move& move, const int bonus){
-                Piece moved_piece = board.at(move.from());
+                Piece moved_piece = board->at(move.from());
                 int to_square = move.to();
-                Piece captured_piece = move.special_type() == Move::EN_PASSANT ? PAWN : board.at(move.to());
+                Piece captured_piece = move.special_type() == Move::EN_PASSANT ? PAWN : board->at(move.to());
                 assert(captured_piece != NONE);
                 apply_gravity(captureHistory[moved_piece][to_square][captured_piece], bonus, CaptureHistory::maxValue);
             };

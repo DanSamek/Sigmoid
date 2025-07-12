@@ -67,6 +67,7 @@ struct Bencher{
                 ops.board = b;
                 ops.depth = BENCH_DEPTH;
                 ops.tt = &tt;
+
             e.start_searching(ops);
             totalVisited += ops.totalNodesVisited;
             std::cout << " " << std::endl;

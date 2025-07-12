@@ -22,9 +22,9 @@ namespace Sigmoid{
 
         WorkerHelper(int threadCnt, bool datagen, Timer* timer) : threadCnt(threadCnt), datagen(datagen), timer(timer) { }
 
-        void enter_search_result(const int searchDepth, const SearchResult& searchResult){
+        void enter_search_result(const int searchDepth, const SearchResult* searchResult){
             std::unique_lock lock(resultLock);
-                depthSearchDone[searchDepth].emplace_back(searchResult);
+                depthSearchDone[searchDepth].emplace_back(*searchResult);
 
                 if (depthSearchDone[searchDepth].size() == threadCnt)
                     save_depth_best_result(searchDepth);
@@ -55,9 +55,6 @@ namespace Sigmoid{
             }
 
             depthSearchDone.erase(searchDepth);
-
-            if (datagen) return;
-
             print_result(searchDepth);
         }
 
