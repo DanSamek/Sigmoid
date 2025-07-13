@@ -36,7 +36,8 @@ namespace Sigmoid {
             msCanBeUsed += increment / 2 + increment / 4;
 
             if(msCanBeUsed >= timeRemaining)
-                msCanBeUsed = std::clamp(msCanBeUsed, minMs, timeRemaining / 25);
+                // msCanBeUsed = std::clamp(msCanBeUsed, minMs, timeRemaining / 25);
+                msCanBeUsed = std::min(std::max(msCanBeUsed, minMs), timeRemaining / 25);
 
             return msCanBeUsed;
         }
