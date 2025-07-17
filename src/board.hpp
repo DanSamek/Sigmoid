@@ -7,7 +7,6 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-#include <math.h>
 
 #include "piece.hpp"
 #include "state.hpp"
@@ -16,7 +15,7 @@
 #include "helper.hpp"
 #include "movegen.hpp"
 #include "zobrist.hpp"
-#include "nnue/current_arch/nnue.hpp"
+#include "nnue/old_arch/nnue.hpp"
 
 namespace Sigmoid {
     struct Board{
@@ -24,7 +23,7 @@ namespace Sigmoid {
         int ply = 0;
         Color whoPlay;
         State currentState;
-        NNUE nnue;
+        OldNNUE nnue;
 
         Board(): ply(0) { }
 

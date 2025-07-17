@@ -30,6 +30,7 @@ namespace Sigmoid {
             int64_t totalNodesVisited;
         };
 
+
         void start_searching(Options& options){
             Timer timer(options.wTime, options.bTime, options.wInc, options.bInc, options.board.whoPlay);
             WorkerHelper worker_helper(workers.size(), options.datagen, &timer);

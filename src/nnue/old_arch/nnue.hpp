@@ -4,6 +4,7 @@
 #include <cassert>
 #include <string>
 #include <sstream>
+#include <cstring>
 
 #include "accumulator.hpp"
 #include "../../constants.hpp"
@@ -21,7 +22,7 @@ namespace Sigmoid{
     // Custom net 768 -> N -> 1 [no perspective].
     struct OldNNUE{
         std::array<OldAccumulator, STACK_SIZE_P1> stack;
-        int index = 0;
+        int stackIndex = 0;
 
         static inline std::array<int16_t, OLD_OUTPUT_SIZE> hiddenLayerBiases;
         static inline std::array<int16_t, OLD_HIDDEN_LAYER_SIZE> hiddenLayerWeights;
@@ -29,8 +30,8 @@ namespace Sigmoid{
         static inline std::array<int16_t, OLD_HIDDEN_LAYER_SIZE> inputLayerBiases;
         static inline std::array<std::array<int16_t, OLD_HIDDEN_LAYER_SIZE>, OLD_NUM_FEATURES> inputLayerWeights;
 
-        static constexpr int qa = 256;
-        static constexpr int qb = 128;
+        static constexpr int qa = 255;
+        static constexpr int qb = 64;
         static constexpr int scale = 400;
 
         OldNNUE() {
@@ -39,17 +40,17 @@ namespace Sigmoid{
         }
 
         void pop(){
-            index--;
+            stackIndex--;
         }
 
         void push(){
-            stack[index + 1] = stack[index];
-            index++;
+            stack[stackIndex + 1] = stack[stackIndex];
+            stackIndex++;
         }
 
         void reset(){
-            index = 0;
-            stack[index].init(inputLayerBiases);
+            stackIndex = 0;
+            stack[stackIndex].init(inputLayerBiases);
             load();
         }
 
@@ -58,8 +59,8 @@ namespace Sigmoid{
         }
 
         void add(Color pieceColor, Piece piece, int square){
-            assert(index >= 0);
-            OldAccumulator* current_accumulator = &stack[index];
+            assert(stackIndex >= 0);
+            OldAccumulator* current_accumulator = &stack[stackIndex];
             int w_feature_index = get_index<WHITE>(pieceColor, piece, square);
             int b_feature_index = get_index<BLACK>(pieceColor, piece, square);
 
@@ -68,8 +69,8 @@ namespace Sigmoid{
         }
 
         void sub(Color pieceColor, Piece piece, int square){
-            assert(index >= 0);
-            OldAccumulator* current_accumulator = &stack[index];
+            assert(stackIndex >= 0);
+            OldAccumulator* current_accumulator = &stack[stackIndex];
             int w_feature_index = get_index<WHITE>(pieceColor, piece, square);
             int b_feature_index = get_index<BLACK>(pieceColor, piece, square);
 
@@ -84,8 +85,8 @@ namespace Sigmoid{
 
         template<Color color>
         int16_t eval() {
-            assert(index >= 0);
-            const auto our_accumulator = stack[index].get<color>();
+            assert(stackIndex >= 0);
+            const auto our_accumulator = stack[stackIndex].get<color>();
 
             int eval = hiddenLayerBiases[0];
             for (int i = 0 ; i < OLD_HIDDEN_LAYER_SIZE; i++)
@@ -109,7 +110,8 @@ namespace Sigmoid{
 
         template<typename T>
         T read_number(int& index, const unsigned char*& ptr){
-            T value = *reinterpret_cast<const T*>(ptr);
+            T value;
+            std::memcpy(&value, ptr, sizeof(T));
             index += sizeof(T);
             ptr += sizeof(T);
             return value;

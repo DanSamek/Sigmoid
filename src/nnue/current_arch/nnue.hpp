@@ -12,7 +12,6 @@
 #include "sentinel_nnue.hpp"
 
 namespace Sigmoid{
-    // TODO custom net 768 -> 128 -> 1 [no perspective] -- to find out, how bad it will be against perspective network.
     struct NNUE{
         std::array<Accumulator, STACK_SIZE_P1> stack;
         int index = 0;

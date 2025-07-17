@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <iomanip>
+#include <fstream>
 #include "../uci.hpp"
 
 struct Datagen{
