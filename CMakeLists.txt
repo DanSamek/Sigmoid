@@ -10,6 +10,10 @@ target_link_options(Sigmoid PRIVATE -pthread)
 
 target_compile_options(Sigmoid PRIVATE -Wall -pedantic)
 
+if(DEFINED NET_BIN)
+    target_compile_definitions(Sigmoid PRIVATE NET_BIN=${NET_BIN})
+endif()
+
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(Sigmoid PRIVATE -O3)
 endif ()

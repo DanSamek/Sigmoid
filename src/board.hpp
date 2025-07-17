@@ -16,7 +16,7 @@
 #include "helper.hpp"
 #include "movegen.hpp"
 #include "zobrist.hpp"
-#include "./nnue/nnue.hpp"
+#include "nnue/current_arch/nnue.hpp"
 
 namespace Sigmoid {
     struct Board{

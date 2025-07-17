@@ -6,9 +6,9 @@
 #include <fstream>
 
 #include "accumulator.hpp"
-#include "../constants.hpp"
-#include "../color.hpp"
-#include "../piece.hpp"
+#include "../../constants.hpp"
+#include "../../color.hpp"
+#include "../../piece.hpp"
 #include "sentinel_nnue.hpp"
 
 namespace Sigmoid{

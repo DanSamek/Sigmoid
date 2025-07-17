@@ -6,7 +6,7 @@
 #include <algorithm>
 
 #include "nnue_consts.hpp"
-#include "../color.hpp"
+#include "../../color.hpp"
 
 namespace Sigmoid{
     struct Accumulator{
