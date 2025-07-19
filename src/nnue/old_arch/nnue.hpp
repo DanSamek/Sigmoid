@@ -94,7 +94,7 @@ namespace Sigmoid{
 
             eval *= scale;
             eval /= qa * qb;
-            return color == WHITE ? eval : -eval;
+            return eval;
         }
 
         template<Color perspective>
