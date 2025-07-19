@@ -6,10 +6,6 @@
 #include "nnue/old_arch/nnue.hpp"
 
 int main(int argc, char* args[]) {
-
-    OldNNUE nnue;
-
-
     if (argc == 1){
         Uci uci;
         uci.loop();

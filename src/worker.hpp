@@ -32,9 +32,10 @@ namespace Sigmoid {
         // datagen stuff
         bool datagen = false;
         uint64_t softNodeLimit;
+        uint64_t hardNodeLimit;
 
         // Called before every search.
-        void load_state(Board* b, TranspositionTable* t, WorkerHelper* wh, Timer* tm, int sd, bool dg, int snl, SearchResult* sr){
+        void load_state(Board* b, TranspositionTable* t, WorkerHelper* wh, Timer* tm, int sd, bool dg, int snl, SearchResult* sr, int hdl){
             board = b;
             tt = t;
             workerHelper = wh;
@@ -43,15 +44,19 @@ namespace Sigmoid {
             result = sr;
             datagen = dg;
             softNodeLimit = snl;
+            hardNodeLimit = hdl;
         }
 
         void new_game(){
             prepare_for_search();
         }
 
-        bool is_time_out() {
+        bool is_time_out() const {
             if (searchDepth != MAX_PLY - 1)
                 return false;
+
+            if (datagen && hardNodeLimit <= result->nodesVisited)
+                return true;
 
             if (datagen)
                 return false;
@@ -71,6 +76,7 @@ namespace Sigmoid {
             reset_killers(root->ply);
 
             int16_t eval;
+            Move best_move = Move::none();
             for (int depth = 1; depth <= searchDepth; depth++){
                 if (datagen && result->nodesVisited > softNodeLimit)
                     break;
@@ -81,6 +87,7 @@ namespace Sigmoid {
                     if (is_time_out())
                         break;
 
+                    best_move = result->bestMove;
                     result->score = eval;
                     if (!datagen)
                         workerHelper->enter_search_result(depth, result);
@@ -105,6 +112,7 @@ namespace Sigmoid {
                     }
                     else{
                         if (!is_time_out()){
+                            best_move = result->bestMove;
                             result->score = eval;
                             if (!datagen)
                                 workerHelper->enter_search_result(depth, result);
@@ -122,6 +130,8 @@ namespace Sigmoid {
                 if (is_time_out())
                     break;
             }
+            if (datagen)
+                result->bestMove = best_move == Move::none() ? result->bestMove : best_move;
         }
 
         template<NodeType nodeType>

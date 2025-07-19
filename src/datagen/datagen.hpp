@@ -4,6 +4,7 @@
 #include <thread>
 #include <iomanip>
 #include <fstream>
+#include <random>
 #include "../uci.hpp"
 
 struct Datagen{
@@ -15,7 +16,7 @@ struct Datagen{
     static inline std::atomic<int64_t> totalPositions = 0;
     static inline std::atomic<int64_t> totalGames = 0;
 
-    static inline bool stopSignal = false;
+    static inline std::atomic<bool> stopSignal = false;
     static inline Timer timer = Timer(0,0,0,0,Color::BLACK);
 
     static void run() {
@@ -24,6 +25,17 @@ struct Datagen{
         Zobrist::init();
         Movegen::init();
         run_threads(options);
+    }
+
+    static int threadRandInt(int min, int max){
+        static thread_local std::mt19937 generator([] {
+            std::random_device rd;
+            auto seed = rd() ^ (std::hash<std::thread::id>{}(std::this_thread::get_id())
+                                + std::chrono::steady_clock::now().time_since_epoch().count());
+            return std::mt19937(seed);
+        }());
+        std::uniform_int_distribution<int> distribution(min, max);
+        return distribution(generator);
     }
 
     static void read_options(Options& options){
@@ -42,22 +54,15 @@ struct Datagen{
         std::cin >> options.threadCount;
     }
 
-    static void set_seed(){
-        auto seed = time(nullptr);
-        std::cout << "run seed: " << seed << std::endl;
-        srand(seed);
-    }
-
     static void run_threads(const Options& options){
         std::vector<std::thread> workers;
-        set_seed();
         for (int i = 0; i < options.threadCount; i++){
             workers.emplace_back([options, i](){ generate_positions(options, i);});
         }
 
         std::cout << "waiting on the `stop` message" << std::endl;
         std::string user_message;
-        while(1){
+        while(true){
             std::cin >> user_message;
             if(user_message != "stop")
                 continue;
@@ -95,28 +100,29 @@ struct Datagen{
         Engine::DatagenOptions datagen_options;
         SearchResult search_result;
         datagen_options.softNodes = options.softNodeLimit;
+        datagen_options.hardNodes = 100'000;
 
         TranspositionTable* tt = new TranspositionTable();
         tt->resize(8);
 
+        loop_start:
         while (!stopSignal){
-            loop_start:
             board.load_from_fen(Uci::START_POS);
 
-            int random_move_count = (rand() % 50) >= 25 ? 8 : 9;
+            int random_move_count = threadRandInt(0, 50) >= 25 ? 8 : 9;
             while(random_move_count--){
                 int num_generated_moves = 0;
                 Movegen::generate_moves<false>(board.currentState, board.whoPlay, moves, num_generated_moves);
-                int move_to_pick = rand() % num_generated_moves;
-                int attempts = 1;
-                if (!num_generated_moves)
-                    goto loop_start;
+                int move_to_pick = threadRandInt(0, MAX_POSSIBLE_MOVES * 2) % num_generated_moves;
+                int check_attempts = 1;
+                bool in_check = board.in_check();
 
                 while(!board.make_move(moves[move_to_pick])){
-                    move_to_pick = rand () % num_generated_moves;
-                    if(attempts >= 3)
+                    move_to_pick = threadRandInt(0, MAX_POSSIBLE_MOVES * 2) % num_generated_moves;
+                    if (in_check && check_attempts >= 3)
                         goto loop_start;
-                    attempts++;
+
+                    check_attempts += in_check;
                 }
             }
 
@@ -131,7 +137,7 @@ struct Datagen{
             std::vector<std::pair<std::string, int>> positions;
             positions.reserve(100);
 
-            while (1){
+            while (true){
                 if (board.is_draw()){
                     game_result = 0.5;
                     break;
@@ -176,6 +182,8 @@ struct Datagen{
                 print_status();
         }
         file.close();
+
+        std::cout << "worker " << workerId << " ended." << std::endl;
     }
 
     static void print_status(){

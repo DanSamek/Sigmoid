@@ -22,9 +22,10 @@ namespace Sigmoid {
             TranspositionTable* tt = nullptr;
             Board board;
 
-            // Datagen stuff
+            // Datagen stuff  TODO, cleanup
             int softNodes = 5000;
             bool datagen = false;
+            int hardNodes = 10'000'000;
 
             // Out values.
             int64_t totalNodesVisited;
@@ -44,7 +45,7 @@ namespace Sigmoid {
                 workers[i].load_state(boards[i], options.tt,
                                       &worker_helper, &timer,
                                       options.depth, options.datagen,
-                                      options.softNodes, search_results[i]);
+                                      options.softNodes, search_results[i], options.hardNodes);
 
                 search_threads.emplace_back(&Worker::iterative_deepening, &workers[i]);
             }
@@ -68,10 +69,11 @@ namespace Sigmoid {
             TranspositionTable* tt = nullptr;
             Board* board;
             int softNodes = 5000;
+            int hardNodes = 10'000'000;
         };
 
         void datagen(DatagenOptions& options, SearchResult* searchResult){
-            workers[0].load_state(options.board, options.tt, nullptr, nullptr, MAX_PLY - 1, true, options.softNodes, searchResult);
+            workers[0].load_state(options.board, options.tt, nullptr, nullptr, MAX_PLY - 1, true, options.softNodes, searchResult, options.hardNodes);
             workers[0].iterative_deepening();
         }
 

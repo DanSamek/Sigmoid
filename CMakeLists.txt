@@ -15,7 +15,7 @@ if(DEFINED NET_BIN)
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_options(Sigmoid PRIVATE -O3)
+    target_compile_options(Sigmoid PRIVATE -O3 -march=native -funroll-loops -DNDEBUG)
 endif ()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
