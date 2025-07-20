@@ -61,21 +61,17 @@ namespace Sigmoid{
         void add(Color pieceColor, Piece piece, int square){
             assert(stackIndex >= 0);
             OldAccumulator* current_accumulator = &stack[stackIndex];
-            int w_feature_index = get_index<WHITE>(pieceColor, piece, square);
-            int b_feature_index = get_index<BLACK>(pieceColor, piece, square);
 
-            current_accumulator->add<WHITE>(inputLayerWeights[w_feature_index]);
-            current_accumulator->add<BLACK>(inputLayerWeights[b_feature_index]);
+            int w_feature_index = get_index<WHITE>(pieceColor, piece, square);
+            current_accumulator->add(inputLayerWeights[w_feature_index]);
         }
 
         void sub(Color pieceColor, Piece piece, int square){
             assert(stackIndex >= 0);
             OldAccumulator* current_accumulator = &stack[stackIndex];
-            int w_feature_index = get_index<WHITE>(pieceColor, piece, square);
-            int b_feature_index = get_index<BLACK>(pieceColor, piece, square);
 
-            current_accumulator->sub<WHITE>(inputLayerWeights[w_feature_index]);
-            current_accumulator->sub<BLACK>(inputLayerWeights[b_feature_index]);
+            int w_feature_index = get_index<WHITE>(pieceColor, piece, square);
+            current_accumulator->sub(inputLayerWeights[w_feature_index]);
         }
 
         void move_piece(Color pieceColor, Piece piece, int from, int to){
@@ -86,7 +82,7 @@ namespace Sigmoid{
         template<Color color>
         int16_t eval() {
             assert(stackIndex >= 0);
-            const auto our_accumulator = stack[stackIndex].get<color>();
+            const auto our_accumulator = stack[stackIndex].get();
 
             int eval = hiddenLayerBiases[0];
             for (int i = 0 ; i < OLD_HIDDEN_LAYER_SIZE; i++)
@@ -94,7 +90,7 @@ namespace Sigmoid{
 
             eval *= scale;
             eval /= qa * qb;
-            return eval;
+            return color == BLACK ? -eval : eval;
         }
 
         template<Color perspective>

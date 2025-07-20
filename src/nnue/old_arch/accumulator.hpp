@@ -10,30 +10,26 @@
 
 namespace Sigmoid{
     struct OldAccumulator{
-        std::array<std::array<int16_t, OLD_HIDDEN_LAYER_SIZE>, 2> data;
+        std::array<int16_t, OLD_HIDDEN_LAYER_SIZE> data;
 
         OldAccumulator() = default;
 
-        template<Color color>
         void add(const std::array<int16_t, OLD_HIDDEN_LAYER_SIZE>& weights) {
             for (int i = 0; i < OLD_HIDDEN_LAYER_SIZE; i++)
-                data[color][i] += weights[i];
+                data[i] += weights[i];
         }
 
-        template<Color color>
         void sub(const std::array<int16_t, OLD_HIDDEN_LAYER_SIZE>& weights) {
             for (int i = 0; i < OLD_HIDDEN_LAYER_SIZE; i++)
-                data[color][i] -= weights[i];
+                data[i] -= weights[i];
         }
 
-        template<Color color>
         std::array<int16_t, OLD_HIDDEN_LAYER_SIZE>& get(){
-            return data[color];
+            return data;
         }
 
         void init(std::array<int16_t, OLD_HIDDEN_LAYER_SIZE>& hiddenLayerBiases){
-            data[WHITE] = hiddenLayerBiases;
-            data[BLACK] = hiddenLayerBiases;
+            data = hiddenLayerBiases;
         }
     };
 }
