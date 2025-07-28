@@ -62,16 +62,16 @@ namespace Sigmoid{
             assert(stackIndex >= 0);
             OldAccumulator* current_accumulator = &stack[stackIndex];
 
-            int w_feature_index = get_index<WHITE>(pieceColor, piece, square);
-            current_accumulator->add(inputLayerWeights[w_feature_index]);
+            int feature_index = get_index(pieceColor, piece, square);
+            current_accumulator->add(inputLayerWeights[feature_index]);
         }
 
         void sub(Color pieceColor, Piece piece, int square){
             assert(stackIndex >= 0);
             OldAccumulator* current_accumulator = &stack[stackIndex];
 
-            int w_feature_index = get_index<WHITE>(pieceColor, piece, square);
-            current_accumulator->sub(inputLayerWeights[w_feature_index]);
+            int feature_index = get_index(pieceColor, piece, square);
+            current_accumulator->sub(inputLayerWeights[feature_index]);
         }
 
         void move_piece(Color pieceColor, Piece piece, int from, int to){
@@ -80,26 +80,24 @@ namespace Sigmoid{
         }
 
         template<Color color>
-        int16_t eval() {
+        int16_t eval(){
             assert(stackIndex >= 0);
-            const auto our_accumulator = stack[stackIndex].get();
+            const auto accumulator = stack[stackIndex].get();
 
             int eval = hiddenLayerBiases[0];
             for (int i = 0 ; i < OLD_HIDDEN_LAYER_SIZE; i++)
-                eval += hiddenLayerWeights[i] * relu(our_accumulator[i]);
+                eval += hiddenLayerWeights[i] * relu(accumulator[i]);
 
             eval *= scale;
             eval /= qa * qb;
             return color == BLACK ? -eval : eval;
         }
 
-        template<Color perspective>
         int get_index(Color pieceColor, Piece piece, int square){
-            int color_index = (pieceColor == perspective) ? 0 : 1;
+            int color_index = pieceColor == BLACK;
             int piece_index = piece;
-            int square_index = perspective == WHITE ? square : square ^ 56;
 
-            int result_index = color_index * 384 + piece_index * 64 + square_index;
+            int result_index = color_index * 384 + piece_index * 64 + square;
             assert(result_index >= 0 && result_index <= 767);
             return result_index;
         }
@@ -134,7 +132,11 @@ namespace Sigmoid{
 
             assert(index < gnetSize);
             hiddenLayerBiases[0] = read_number<int>(index, ptr);
+
             assert(index == gnetSize);
+            if (index != gnetSize) {
+                throw std::out_of_range("Invalid net size.");
+            }
             loaded = true;
         }
     };

@@ -47,6 +47,7 @@ struct Datagen{
         std::cout << "/_______  /|__\\___  /|__|_|  /\\____/|__\\____ | \n";
         std::cout << "        \\/   /_____/       \\/               \\/ \n";
         std::cout << "Datagen tool" << std::endl;
+        std::cout << "HL Size: " << OLD_HIDDEN_LAYER_SIZE << std::endl;
 
         std::cout << "Soft node limit: ";
         std::cin >> options.softNodeLimit;
@@ -150,13 +151,13 @@ struct Datagen{
                 bool is_check = board.in_check();
 
                 if (search_result.bestMove == Move::none()){
-                    game_result = is_check ? (board.whoPlay ? 0 : 1) : 0.5;
+                    game_result = is_check ? (board.whoPlay == WHITE ? 0 : 1) : 0.5;
                     break;
                 }
 
                 int abs_score = std::abs(search_result.score);
                 int is_mate = abs_score >= CHECKMATE_BOUND;
-                int white_relative_score = board.whoPlay ? search_result.score : -search_result.score;
+                int white_relative_score = board.whoPlay == WHITE ? search_result.score : -search_result.score;
 
                 if (!is_check && !is_mate && !board.is_capture(search_result.bestMove)) {
                     positions.emplace_back(board.get_fen(), white_relative_score);
